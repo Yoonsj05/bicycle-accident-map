@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>자전거 사고 위험지역 분석</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      color: #243247;
+    }
+
+    header {
+      background: #173b63;
+      color: white;
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 12px;
+      font-size: 25px;
+    }
+
+    nav {
+      background: #ffffff;
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    nav a {
+      color: #173b63;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 0 15px;
+    }
+
+    nav a:hover {
+      color: #2785d8;
+    }
+
+    main {
+      max-width: 1050px;
+      margin: 30px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    p {
+      line-height: 1.7;
+    }
+
+    .description {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    select, button {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+
+    select {
+      width: 100%;
+      max-width: 350px;
+      background: white;
+    }
+
+    button {
+      background: #173b63;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #275b91;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f1f5f9;
+      border-radius: 10px;
+      color: #64748b;
+    }
+
+    .ranking {
+      margin-top: 15px;
+    }
+
+    .ranking-item {
+      padding: 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .empty {
+      text-align: center;
+      color: #94a3b8;
+      padding: 20px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 21px;
+      }
+
+      nav a {
+        margin: 0 8px;
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>자전거 사고 위험지역 분석</h1>
+    <p>지역별 자전거 교통사고 데이터 분석</p>
+  </header>
+
+  <nav>
+    <a href="index.html">메인 지도</a>
+    <a href="analysis.html">사고 분석</a>
+  </nav>
+
+  <main>
+
+    <section class="card">
+      <h2>지역별 사고 분석</h2>
+
+      <p class="description">
+        분석하고 싶은 지역을 선택해 주세요.
+        공공데이터를 활용한 분석 기능이 추가될 예정입니다.
+      </p>
+
+      <select id="region">
+        <option value="">지역을 선택하세요</option>
+        <option value="11">서울특별시</option>
+        <option value="26">부산광역시</option>
+        <option value="27">대구광역시</option>
+        <option value="28">인천광역시</option>
+        <option value="29">광주광역시</option>
+        <option value="30">대전광역시</option>
+        <option value="31">울산광역시</option>
+        <option value="41">경기도</option>
+        <option value="42">강원도</option>
+        <option value="43">충청북도</option>
+        <option value="44">충청남도</option>
+        <option value="45">전북특별자치도</option>
+        <option value="46">전라남도</option>
+        <option value="47">경상북도</option>
+        <option value="48">경상남도</option>
+        <option value="50">제주특별자치도</option>
+      </select>
+
+      <br>
+
+      <button onclick="analyzeRegion()">
+        사고 위험지역 분석하기
+      </button>
+
+      <div id="result" class="result">
+        지역을 선택하고 분석 버튼을 눌러주세요.
+      </div>
+
+    </section>
+
+    <section class="card">
+      <h2>사고 위험지역 TOP 5</h2>
+
+      <p class="description">
+        사고 건수와 인명피해 정보를 바탕으로
+        위험지역 순위를 표시할 예정입니다.
+      </p>
+
+      <div id="ranking" class="ranking">
+        <p class="empty">아직 분석된 데이터가 없습니다.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>위험도 분석 기준</h2>
+
+      <p>
+        사고 건수, 사망자 수, 부상자 수를 활용하여
+        지역별 사고 위험도를 비교할 예정입니다.
+      </p>
+
+      <p class="description">
+        실제 데이터의 항목을 확인한 후
+        위험도 계산 기준을 확정합니다.
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    모바일프로그래밍 중간고사 프로젝트
+  </footer>
+
+  <script>
+    function analyzeRegion() {
+      const region = document.getElementById("region");
+      const result = document.getElementById("result");
+
+      if (region.value === "") {
+        result.textContent = "먼저 지역을 선택해 주세요.";
+        return;
+      }
+
+      const regionName =
+        region.options[region.selectedIndex].text;
+
+      result.textContent =
+        regionName +
+        " 선택 완료! 공공데이터 API 연결 후 실제 분석 결과가 표시됩니다.";
+    }
+  </script>
+
+</body>
+</html>
