@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>자전거 사고 위험지역 분석기</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f3f6fa;
+      color: #243247;
+    }
+
+    header {
+      background-color: #173b63;
+      color: white;
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 12px;
+      font-size: 25px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 1050px;
+      margin: 30px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+
+    .description {
+      color: #64748b;
+      line-height: 1.7;
+    }
+
+    #map {
+      width: 100%;
+      height: 460px;
+      border-radius: 10px;
+      background: #e5e7eb;
+    }
+
+    #status {
+      color: #52657c;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 21px;
+      }
+
+      #map {
+        height: 350px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>자전거 사고 위험지역 분석기</h1>
+    <p>공공데이터 기반 자전거 교통사고 위험지역 분석</p>
+  </header>
+
+  <main>
+
+    <section class="card">
+      <h2>프로젝트 소개</h2>
+      <p class="description">
+        이 웹사이트는 공공데이터포털의
+        자전거 교통사고 데이터를 활용하여
+        사고 위험지역을 분석하는 서비스입니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>자전거 사고 위험지역 지도</h2>
+
+      <p class="description">
+        현재는 카카오맵 연결 테스트 단계입니다.
+        이후 사고다발지역과 위험도 분석 기능을
+        추가할 예정입니다.
+      </p>
+
+      <div id="map"></div>
+
+      <p id="status">지도 연결을 확인하고 있어요.</p>
+    </section>
+
+  </main>
+
+  <footer>
+    모바일프로그래밍 중간고사 프로젝트
+  </footer>
+
+  <!-- 카카오맵 JavaScript SDK -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
+
+  <script>
+    function initMap() {
+      const status = document.getElementById("status");
+
+      if (!window.kakao || !kakao.maps) {
+        status.textContent =
+          "지도 연결 실패: JavaScript 키와 도메인을 확인해 주세요.";
+        return;
+      }
+
+      try {
+        // 서울시청을 중심으로 지도 표시
+        const container = document.getElementById("map");
+
+        const options = {
+          center: new kakao.maps.LatLng(37.5665, 126.9780),
+          level: 8
+        };
+
+        const map = new kakao.maps.Map(container, options);
+
+        status.textContent = "카카오맵 연결 성공!";
+      } catch (error) {
+        status.textContent = "지도 표시 중 오류가 발생했어요.";
+        console.error(error);
+      }
+    }
+
+    window.addEventListener("load", initMap);
+  </script>
+
+</body>
+</html>
