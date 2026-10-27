@@ -8,7 +8,9 @@
   <title>자전거 사고 위험지역 분석기</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -36,15 +38,15 @@
 
     nav {
       background: white;
-      padding: 17px;
       text-align: center;
+      padding: 17px;
     }
 
     nav a {
+      margin: 0 15px;
       color: #173b63;
       text-decoration: none;
       font-weight: bold;
-      margin: 0 15px;
     }
 
     main {
@@ -72,54 +74,49 @@
       line-height: 1.7;
     }
 
-    /* 지역 선택 메뉴 */
+    /* 필터 영역 */
     .search-box {
       display: flex;
-      flex-wrap: wrap;
       align-items: end;
+      flex-wrap: wrap;
       gap: 12px;
+      margin: 20px 0;
       padding: 18px;
-      margin-top: 18px;
       background: #f1f5f9;
       border-radius: 12px;
     }
 
     .search-field {
       flex: 1;
-      min-width: 180px;
+      min-width: 170px;
     }
 
-    .search-field label {
+    label {
       display: block;
+      margin-bottom: 8px;
       font-weight: bold;
       font-size: 14px;
-      margin-bottom: 9px;
     }
 
-    .search-field select {
+    select {
       width: 100%;
       padding: 12px;
-      background: white;
       border: 1px solid #cbd5e1;
       border-radius: 8px;
+      background: white;
       font-size: 14px;
     }
 
     .button {
       display: inline-block;
-      padding: 13px 20px;
+      padding: 13px 19px;
       background: #173b63;
       color: white;
       text-decoration: none;
-      border: none;
+      border: 0;
       border-radius: 8px;
       font-size: 14px;
       cursor: pointer;
-    }
-
-    .button:disabled {
-      opacity: 0.6;
-      cursor: wait;
     }
 
     .button-outline {
@@ -127,16 +124,20 @@
       color: #173b63;
     }
 
-    /* 처음에는 지도 전체 너비 */
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    /* 지도 */
     .map-layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
       gap: 16px;
-      margin-top: 20px;
+      margin-top: 18px;
       align-items: stretch;
     }
 
-    /* 마커 클릭 시 좌우 분리 */
     .map-layout.active {
       grid-template-columns: 310px minmax(0, 1fr);
     }
@@ -145,8 +146,8 @@
       width: 100%;
       height: 480px;
       min-width: 0;
-      border-radius: 12px;
       background: #e5e7eb;
+      border-radius: 12px;
       overflow: hidden;
     }
 
@@ -167,7 +168,6 @@
     .panel-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
       gap: 10px;
       margin-bottom: 20px;
     }
@@ -181,8 +181,7 @@
     .close-button {
       width: 30px;
       height: 30px;
-      flex-shrink: 0;
-      border: none;
+      border: 0;
       border-radius: 7px;
       background: #e8eef6;
       color: #173b63;
@@ -191,10 +190,10 @@
     }
 
     .region-name {
-      font-weight: bold;
       font-size: 16px;
-      line-height: 1.7;
+      font-weight: bold;
       color: #173b63;
+      line-height: 1.7;
       margin-bottom: 20px;
       word-break: keep-all;
       overflow-wrap: anywhere;
@@ -209,7 +208,9 @@
       font-size: 14px;
     }
 
-    .detail-label { color: #64748b; }
+    .detail-label {
+      color: #64748b;
+    }
 
     .detail-value {
       font-weight: bold;
@@ -218,41 +219,41 @@
 
     .score-box {
       background: #fff1f2;
+      border-radius: 10px;
       padding: 18px;
       margin-top: 24px;
-      border-radius: 10px;
       text-align: center;
     }
 
     .score-number {
       display: block;
+      margin-top: 8px;
       font-size: 25px;
       font-weight: bold;
       color: #dc2626;
-      margin-top: 8px;
     }
 
     .score-caption {
+      margin-top: 16px;
       color: #64748b;
       font-size: 12px;
       line-height: 1.6;
-      margin-top: 16px;
     }
 
     .status {
-      background: #eef4fb;
       padding: 15px;
       margin-top: 16px;
+      background: #eef4fb;
       border-radius: 10px;
       font-size: 14px;
       line-height: 1.7;
     }
 
     .actions {
+      margin-top: 18px;
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      margin-top: 18px;
     }
 
     footer {
@@ -264,581 +265,956 @@
     }
 
     @media (max-width: 760px) {
-      header h1 { font-size: 21px; }
-      .card { padding: 16px; }
-
-      .map-layout.active {
-        grid-template-columns: minmax(0, 1fr);
+      header h1 {
+        font-size: 21px;
       }
 
-      .detail-panel { min-height: 0; }
-
-      #map { height: 400px; }
+      .card {
+        padding: 16px;
+      }
 
       .search-box {
         flex-direction: column;
         align-items: stretch;
       }
 
-      .search-field { width: 100%; }
+      .search-field {
+        width: 100%;
+      }
 
-      nav a { margin: 0 9px; }
+      .map-layout.active {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .detail-panel {
+        min-height: 0;
+      }
+
+      #map {
+        height: 400px;
+      }
+
+      nav a {
+        margin: 0 9px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <h1>자전거 사고 위험지역 분석기</h1>
-    <p>공공데이터 기반 자전거 교통사고 위험지역 분석</p>
-  </header>
+<header>
+  <h1>자전거 사고 위험지역 분석기</h1>
+  <p>공공데이터 기반 자전거 교통사고 위험지역 분석</p>
+</header>
 
-  <nav>
-    <a href="index.html">메인 지도</a>
-    <a href="analysis.html">사고 분석</a>
-  </nav>
+<nav>
+  <a href="index.html">메인 지도</a>
+  <a href="analysis.html">사고 분석</a>
+</nav>
 
-  <main>
+<main>
 
-    <section class="card">
-      <h2>프로젝트 소개</h2>
-      <p class="description">
-        공공데이터포털의 자전거 교통사고 다발지역
-        정보를 활용해 사고 위험지역을 지도에 표시하고
-        위험도를 분석하는 웹앱입니다.
-      </p>
-    </section>
+  <section class="card">
+    <h2>프로젝트 소개</h2>
+    <p class="description">
+      공공데이터포털의 자전거 교통사고 다발지역 정보를
+      활용하여 사고 위치를 지도에 표시하고
+      위험도를 분석하는 웹앱입니다.
+    </p>
+  </section>
 
-    <section class="card">
-      <h2>자전거 사고다발지역 지도</h2>
+  <section class="card">
+    <h2>자전거 사고다발지역 지도</h2>
 
-      <p class="description">
-        조회할 서울 지역을 선택한 뒤
-        사고지역 조회 버튼을 눌러주세요.
-      </p>
+    <p class="description">
+      처음에는 서울 전체 사고다발지역을 표시합니다.
+      원하는 지역을 선택하면 해당 지역의 마커만
+      표시하고 지도도 자동으로 이동합니다.
+    </p>
 
-      <div class="search-box">
+    <div class="search-box">
 
-        <div class="search-field">
-          <label for="year">조회 연도</label>
-          <select id="year">
-            <option value="2023">2023년</option>
-            <option value="2022">2022년</option>
-            <option value="2021">2021년</option>
-          </select>
+      <div class="search-field">
+        <label for="year">조회 연도</label>
+        <select id="year">
+          <option value="2023">2023년</option>
+          <option value="2022">2022년</option>
+          <option value="2021">2021년</option>
+        </select>
+      </div>
+
+      <div class="search-field">
+        <label for="district">서울 자치구</label>
+
+        <select id="district">
+          <option value="all">서울 전체</option>
+          <option value="680">강남구</option>
+          <option value="740">강동구</option>
+          <option value="305">강북구</option>
+          <option value="500">강서구</option>
+          <option value="620">관악구</option>
+          <option value="215">광진구</option>
+          <option value="530">구로구</option>
+          <option value="545">금천구</option>
+          <option value="350">노원구</option>
+          <option value="320">도봉구</option>
+          <option value="230">동대문구</option>
+          <option value="590">동작구</option>
+          <option value="440">마포구</option>
+          <option value="410">서대문구</option>
+          <option value="650">서초구</option>
+          <option value="200">성동구</option>
+          <option value="290">성북구</option>
+          <option value="710">송파구</option>
+          <option value="470">양천구</option>
+          <option value="560">영등포구</option>
+          <option value="170">용산구</option>
+          <option value="380">은평구</option>
+          <option value="110">종로구</option>
+          <option value="140">중구</option>
+          <option value="260">중랑구</option>
+        </select>
+      </div>
+
+      <button id="filterButton"
+              class="button"
+              onclick="applyFilter()">
+        필터 적용
+      </button>
+
+      <button id="resetButton"
+              class="button button-outline"
+              onclick="resetFilter()">
+        전체 보기
+      </button>
+    </div>
+
+    <p id="currentRegion" class="description">
+      현재 표시: 2023년 서울 전체
+    </p>
+
+    <div id="mapLayout" class="map-layout">
+
+      <!-- 클릭할 때만 표시되는 왼쪽 정보창 -->
+      <aside id="detailPanel" class="detail-panel">
+
+        <div class="panel-header">
+          <h3 class="panel-title">사고지역 상세정보</h3>
+          <button class="close-button"
+                  onclick="closeDetailPanel()"
+                  aria-label="상세정보 닫기">
+            &times;
+          </button>
         </div>
 
-        <div class="search-field">
-          <label for="district">서울 자치구 선택</label>
-          <select id="district">
-            <option value="680">강남구</option>
-            <option value="740">강동구</option>
-            <option value="305">강북구</option>
-            <option value="500">강서구</option>
-            <option value="620">관악구</option>
-            <option value="215">광진구</option>
-            <option value="530">구로구</option>
-            <option value="545">금천구</option>
-            <option value="350">노원구</option>
-            <option value="320">도봉구</option>
-            <option value="230">동대문구</option>
-            <option value="590">동작구</option>
-            <option value="440">마포구</option>
-            <option value="410">서대문구</option>
-            <option value="650">서초구</option>
-            <option value="200">성동구</option>
-            <option value="290">성북구</option>
-            <option value="710">송파구</option>
-            <option value="470">양천구</option>
-            <option value="560">영등포구</option>
-            <option value="170">용산구</option>
-            <option value="380">은평구</option>
-            <option value="110">종로구</option>
-            <option value="140">중구</option>
-            <option value="260">중랑구</option>
-          </select>
-        </div>
+        <div id="detailContent"></div>
+      </aside>
 
-        <button id="searchButton"
-                class="button"
-                onclick="loadAccidentMarkers()">
-          사고지역 조회
-        </button>
+      <!-- 오른쪽 카카오맵 -->
+      <div id="map"></div>
 
-      </div>
+    </div>
 
-      <p id="currentRegion" class="description">
-        현재 조회 지역: 2023년 서울 강남구
-      </p>
+    <div id="status" class="status" role="status">
+      서울 전체 사고 데이터를 준비하고 있어요.
+    </div>
 
-      <div id="mapLayout" class="map-layout">
+    <div class="actions">
+      <a href="analysis.html" class="button">
+        상세 사고 분석 보기
+      </a>
+    </div>
+  </section>
 
-        <aside id="detailPanel" class="detail-panel">
-          <div class="panel-header">
-            <h3 class="panel-title">
-              사고지역 상세정보
-            </h3>
-            <button class="close-button"
-                    onclick="closeDetailPanel()"
-                    aria-label="상세정보 닫기">
-              &times;
-            </button>
-          </div>
+  <section class="card">
+    <h2>위험도 분석 안내</h2>
+    <p class="description">
+      사고 건수 × 3, 사망자 수 × 10,
+      중상자 수 × 5, 경상자 수 × 2,
+      부상신고자 수 × 1로 점수를 계산합니다.
+    </p>
+    <p class="description">
+      이 점수는 과제용 자체 지표이며
+      공식 위험등급이나 실제 사고 발생 확률은 아닙니다.
+    </p>
+  </section>
 
-          <div id="detailContent"></div>
-        </aside>
+</main>
 
-        <div id="map"
-             aria-label="자전거 사고다발지역 지도">
-        </div>
+<footer>
+  자료: 한국도로교통공단 자전거 교통사고 다발지역 OpenAPI
+  <br>
+  모바일프로그래밍 중간고사 프로젝트
+</footer>
 
-      </div>
+<!-- 수정 1: 카카오 JavaScript 키 -->
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
 
-      <div id="status" class="status" role="status">
-        사고 데이터를 준비하고 있어요.
-      </div>
+<script>
 
-      <div class="actions">
-        <a href="analysis.html" class="button">
-          상세 사고 분석 보기
-        </a>
-      </div>
+  // =====================================
+  // 수정 2: GAS 웹 앱 URL
+  // =====================================
 
-    </section>
+  const GAS_URL =
+    "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
 
-    <section class="card">
-      <h2>위험도 분석 안내</h2>
+  // 서울 25개 자치구 코드
+  const DISTRICTS = [
+    "680", "740", "305", "500", "620",
+    "215", "530", "545", "350", "320",
+    "230", "590", "440", "410", "650",
+    "200", "290", "710", "470", "560",
+    "170", "380", "110", "140", "260"
+  ];
 
-      <p class="description">
-        위험도 점수는 사고 건수 × 3,
-        사망자 수 × 10,
-        중상자 수 × 5,
-        경상자 수 × 2,
-        부상신고자 수 × 1로 계산합니다.
-      </p>
+  const SEOUL_CENTER = {
+    lat: 37.5665,
+    lng: 126.9780
+  };
 
-      <p class="description">
-        공식 위험등급이나 실제 사고 발생 확률이 아닌
-        과제용 자체 분석 지표입니다.
-      </p>
-    </section>
+  // 브라우저 데이터 보관 시간: 1시간
+  const CACHE_TIME = 60 * 60 * 1000;
 
-  </main>
+  let map = null;
+  let markers = [];
+  let allAccidents = [];
+  let currentYear = "2023";
 
-  <footer>
-    자료: 한국도로교통공단 자전거 교통사고 다발지역 OpenAPI
-    <br>
-    모바일프로그래밍 중간고사 프로젝트
-  </footer>
+  let requestNumber = 0;
+  let loading = false;
+  let selectedPosition = null;
 
-  <!-- 수정 1: 카카오 JavaScript 키 -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
+  const mapElement =
+    document.getElementById("map");
 
-  <script>
-    // 수정 2: GAS 웹 앱 URL
-    const GAS_URL =
-      "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
+  const mapLayout =
+    document.getElementById("mapLayout");
 
-    let map = null;
-    let markers = [];
-    let requestNumber = 0;
-    let loading = false;
-    let selectedPosition = null;
+  const detailPanel =
+    document.getElementById("detailPanel");
 
-    const statusBox =
-      document.getElementById("status");
+  const detailContent =
+    document.getElementById("detailContent");
 
-    const mapLayout =
-      document.getElementById("mapLayout");
+  const statusBox =
+    document.getElementById("status");
 
-    const detailPanel =
-      document.getElementById("detailPanel");
+  const yearSelect =
+    document.getElementById("year");
 
-    const detailContent =
-      document.getElementById("detailContent");
+  const districtSelect =
+    document.getElementById("district");
 
-    const searchButton =
-      document.getElementById("searchButton");
+  const filterButton =
+    document.getElementById("filterButton");
 
-    const mapElement =
-      document.getElementById("map");
+  const resetButton =
+    document.getElementById("resetButton");
 
-    // JSONP로 GAS 데이터 요청
-    function requestJSONP(url) {
-      return new Promise(function(resolve, reject) {
+  // =====================================
+  // JSONP로 GAS 데이터 요청
+  // =====================================
 
-        requestNumber++;
-        const callbackName =
-          "mapCallback" + requestNumber;
+  function requestJSONP(url) {
 
-        const script =
-          document.createElement("script");
+    return new Promise(function(resolve, reject) {
 
-        let finished = false;
+      requestNumber++;
 
-        const timer = setTimeout(function() {
-          finish(new Error("데이터 요청 시간 초과"));
-        }, 20000);
+      const callbackName =
+        "bicycleMapCallback" + requestNumber;
 
-        function cleanup() {
-          clearTimeout(timer);
-          delete window[callbackName];
-          script.remove();
-        }
+      const script =
+        document.createElement("script");
 
-        function finish(error, data) {
-          if (finished) return;
-          finished = true;
-          cleanup();
+      let finished = false;
 
-          if (error) reject(error);
-          else resolve(data);
-        }
+      const timer = setTimeout(function() {
+        finish(new Error("API 요청 시간이 초과됐어요."));
+      }, 20000);
 
-        window[callbackName] = function(data) {
-          finish(null, data);
-        };
-
-        script.onerror = function() {
-          finish(new Error("GAS 연결 실패"));
-        };
-
-        script.src = url +
-          (url.includes("?") ? "&" : "?") +
-          "callback=" +
-          encodeURIComponent(callbackName);
-
-        document.body.appendChild(script);
-      });
-    }
-
-    // 카카오맵 생성
-    function initMap() {
-      if (!window.kakao || !kakao.maps) {
-        statusBox.textContent =
-          "카카오맵 연결 실패! JavaScript 키를 확인해 주세요.";
-        return;
+      function cleanup() {
+        clearTimeout(timer);
+        delete window[callbackName];
+        script.remove();
       }
 
-      map = new kakao.maps.Map(mapElement, {
-        center: new kakao.maps.LatLng(
-          37.4964, 127.0533
-        ),
-        level: 5
-      });
+      function finish(error, data) {
+        if (finished) return;
 
-      loadAccidentMarkers();
-    }
+        finished = true;
+        cleanup();
 
-    // 지도 크기 변경 반영
-    function refreshMap(center) {
-      if (!map) return;
+        if (error) reject(error);
+        else resolve(data);
+      }
 
-      requestAnimationFrame(function() {
-        requestAnimationFrame(function() {
-          map.relayout();
+      window[callbackName] = function(data) {
+        finish(null, data);
+      };
 
-          if (center) {
-            map.setCenter(center);
-          }
-        });
-      });
-    }
+      script.onerror = function() {
+        finish(new Error("GAS 연결 실패"));
+      };
 
-    // 지역별 사고 데이터 가져오기
-    async function loadAccidentMarkers() {
+      script.src =
+        url +
+        (url.includes("?") ? "&" : "?") +
+        "callback=" +
+        encodeURIComponent(callbackName);
 
-      if (!map || loading) return;
+      document.body.appendChild(script);
+    });
+  }
+
+  // =====================================
+  // 브라우저 캐시 읽기
+  // =====================================
+
+  function readCache(year) {
+
+    try {
+      const key = "bicycle_seoul_" + year;
+
+      const stored = localStorage.getItem(key);
+
+      if (!stored) return null;
+
+      const cache = JSON.parse(stored);
 
       if (
-        !GAS_URL.startsWith(
-          "https://script.google.com/macros/s/"
-        ) ||
-        !GAS_URL.endsWith("/exec")
+        !cache ||
+        Date.now() - cache.savedAt > CACHE_TIME ||
+        !Array.isArray(cache.accidents)
       ) {
-        statusBox.textContent =
-          "GAS 웹 앱 URL을 확인해 주세요.";
-        return;
+        localStorage.removeItem(key);
+        return null;
       }
 
-      const year =
-        document.getElementById("year").value;
+      return cache.accidents;
 
-      const districtSelect =
-        document.getElementById("district");
+    } catch (error) {
+      return null;
+    }
+  }
 
-      const district = districtSelect.value;
+  // =====================================
+  // 브라우저 캐시 저장
+  // =====================================
 
-      const districtName =
-        districtSelect.options[
-          districtSelect.selectedIndex
-        ].text;
+  function saveCache(year, accidents) {
 
-      loading = true;
-      searchButton.disabled = true;
+    try {
+      localStorage.setItem(
+        "bicycle_seoul_" + year,
+        JSON.stringify({
+          savedAt: Date.now(),
+          accidents: accidents
+        })
+      );
+    } catch (error) {
+      // 저장 공간을 사용할 수 없어도 조회는 계속함
+    }
+  }
+
+  // =====================================
+  // 지도 생성
+  // =====================================
+
+  function initMap() {
+
+    if (!window.kakao || !kakao.maps) {
+      statusBox.textContent =
+        "카카오맵 연결 실패! JavaScript 키를 확인해 주세요.";
+      return;
+    }
+
+    map = new kakao.maps.Map(mapElement, {
+      center: new kakao.maps.LatLng(
+        SEOUL_CENTER.lat,
+        SEOUL_CENTER.lng
+      ),
+      level: 9
+    });
+
+    loadAllAccidents("2023");
+  }
+
+  // =====================================
+  // 지도 크기 갱신
+  // =====================================
+
+  function refreshMap(callback) {
+
+    if (!map) return;
+
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+
+        map.relayout();
+
+        if (callback) callback();
+      });
+    });
+  }
+
+  // =====================================
+  // 한 자치구의 데이터 조회
+  // =====================================
+
+  async function fetchDistrict(year, district) {
+
+    const query =
+      "?year=" + encodeURIComponent(year) +
+      "&sido=11" +
+      "&gugun=" + encodeURIComponent(district);
+
+    const data =
+      await requestJSONP(GAS_URL + query);
+
+    if (!data || !data.success) {
+      throw new Error(
+        data && data.error
+          ? data.error
+          : "API 응답 오류"
+      );
+    }
+
+    const items =
+      Array.isArray(data.accidents)
+        ? data.accidents
+        : [];
+
+    return items.map(function(item) {
+      return {
+        ...item,
+        districtCode: district
+      };
+    });
+  }
+
+  // =====================================
+  // 서울 25개 구 데이터 전체 조회
+  // =====================================
+
+  async function loadAllAccidents(year) {
+
+    if (!map || loading) return false;
+
+    if (
+      !GAS_URL.startsWith(
+        "https://script.google.com/macros/s/"
+      ) ||
+      !GAS_URL.endsWith("/exec")
+    ) {
+      statusBox.textContent =
+        "GAS 웹 앱 URL을 확인해 주세요.";
+      return false;
+    }
+
+    loading = true;
+    filterButton.disabled = true;
+    resetButton.disabled = true;
+
+    try {
+
+      // 먼저 저장된 데이터 확인
+      const cached = readCache(year);
+
+      if (cached !== null) {
+
+        allAccidents = cached;
+        currentYear = year;
+
+        statusBox.textContent =
+          "저장된 서울 전체 데이터를 불러왔어요.";
+
+        return true;
+      }
 
       statusBox.textContent =
-        year + "년 서울 " + districtName +
-        " 사고 데이터를 불러오는 중...";
+        year +
+        "년 서울 25개 자치구 데이터를 불러오는 중...";
 
-      try {
+      const results = [];
+      const failures = [];
 
-        const query =
-          "?year=" + encodeURIComponent(year) +
-          "&sido=11" +
-          "&gugun=" + encodeURIComponent(district);
+      let nextIndex = 0;
+      let completed = 0;
 
-        const data =
-          await requestJSONP(GAS_URL + query);
+      // 동시에 최대 4개의 구만 요청
+      async function worker() {
 
-        if (!data || !data.success) {
-          throw new Error(
-            data && data.error
-              ? data.error
-              : "API 응답 오류"
-          );
-        }
+        while (nextIndex < DISTRICTS.length) {
 
-        const accidents =
-          Array.isArray(data.accidents)
-            ? data.accidents
-            : [];
+          const index = nextIndex++;
+          const district = DISTRICTS[index];
 
-        // 새 데이터 수신에 성공하면 기존 마커 제거
-        markers.forEach(function(marker) {
-          marker.setMap(null);
-        });
+          try {
 
-        markers = [];
-        closeDetailPanel();
-
-        document.getElementById(
-          "currentRegion"
-        ).textContent =
-          "현재 조회 지역: " +
-          year + "년 서울 " + districtName;
-
-        const bounds =
-          new kakao.maps.LatLngBounds();
-
-        let validCount = 0;
-
-        accidents.forEach(function(item) {
-
-          if (
-            item.latitude == null ||
-            item.longitude == null
-          ) return;
-
-          const latitude = Number(item.latitude);
-          const longitude = Number(item.longitude);
-
-          if (
-            !Number.isFinite(latitude) ||
-            !Number.isFinite(longitude) ||
-            latitude < 33 || latitude > 39 ||
-            longitude < 124 || longitude > 132
-          ) return;
-
-          const position =
-            new kakao.maps.LatLng(
-              latitude, longitude
+            const items = await fetchDistrict(
+              year,
+              district
             );
 
-          const marker =
-            new kakao.maps.Marker({
-              map: map,
-              position: position,
-              title: item.name || "사고다발지역"
-            });
+            results.push(...items);
 
-          markers.push(marker);
-          bounds.extend(position);
-          validCount++;
+          } catch (error) {
 
-          kakao.maps.event.addListener(
-            marker,
-            "click",
-            function() {
-              selectAccident(marker, item);
-            }
-          );
+            failures.push(district);
+            console.error(
+              district + " 조회 오류:",
+              error
+            );
+          }
+
+          completed++;
+
+          statusBox.textContent =
+            "서울 전체 사고지역 조회 중... " +
+            completed + " / " +
+            DISTRICTS.length + "개 구 완료";
+        }
+      }
+
+      await Promise.all([
+        worker(),
+        worker(),
+        worker(),
+        worker()
+      ]);
+
+      if (failures.length === DISTRICTS.length) {
+        throw new Error(
+          "전체 지역 조회에 실패했어요. GAS 배포 상태를 확인해 주세요."
+        );
+      }
+
+      allAccidents = results;
+      currentYear = year;
+
+      // 일부 구가 실패했다면 불완전한 데이터는 캐시하지 않음
+      if (failures.length === 0) {
+        saveCache(year, allAccidents);
+      } else {
+        statusBox.textContent =
+          failures.length +
+          "개 구 조회에 실패했어요. 일부 지역 데이터가 누락됐을 수 있어요.";
+      }
+
+      return true;
+
+    } catch (error) {
+
+      statusBox.textContent =
+        "서울 전체 데이터 조회 실패: " +
+        error.message;
+
+      console.error(error);
+      return false;
+
+    } finally {
+
+      loading = false;
+      filterButton.disabled = false;
+      resetButton.disabled = false;
+    }
+  }
+
+  // =====================================
+  // 기존 마커 제거
+  // =====================================
+
+  function clearMarkers() {
+
+    markers.forEach(function(marker) {
+      marker.setMap(null);
+    });
+
+    markers = [];
+  }
+
+  // =====================================
+  // 선택된 지역의 마커만 표시
+  // =====================================
+
+  function displayMarkers(district) {
+
+    clearMarkers();
+    closeDetailPanel();
+
+    const filtered =
+      district === "all"
+        ? allAccidents
+        : allAccidents.filter(function(item) {
+            return item.districtCode === district;
+          });
+
+    const bounds =
+      new kakao.maps.LatLngBounds();
+
+    let validCount = 0;
+
+    filtered.forEach(function(item) {
+
+      if (
+        item.latitude == null ||
+        item.longitude == null
+      ) return;
+
+      const latitude = Number(item.latitude);
+      const longitude = Number(item.longitude);
+
+      if (
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(longitude) ||
+        latitude < 33 || latitude > 39 ||
+        longitude < 124 || longitude > 132
+      ) return;
+
+      const position =
+        new kakao.maps.LatLng(
+          latitude,
+          longitude
+        );
+
+      const marker =
+        new kakao.maps.Marker({
+          map: map,
+          position: position,
+          title: item.name || "사고다발지역"
         });
 
-        if (validCount === 1) {
-          map.setCenter(
-            markers[0].getPosition()
-          );
-          map.setLevel(5);
+      markers.push(marker);
+      bounds.extend(position);
+      validCount++;
 
-        } else if (validCount > 1) {
-          map.setBounds(bounds, 40, 40, 40, 40);
+      kakao.maps.event.addListener(
+        marker,
+        "click",
+        function() {
+          selectAccident(marker, item);
         }
+      );
+    });
 
-        if (accidents.length === 0) {
-          statusBox.textContent =
-            year + "년 서울 " + districtName +
-            "에 조회되는 사고다발지역이 없어요. " +
-            "다른 연도 또는 지역을 선택해 주세요.";
-        } else {
-          statusBox.textContent =
-            year + "년 서울 " + districtName +
-            " 사고다발지역 " +
-            accidents.length + "곳 조회 완료! " +
-            "지도에 마커 " + validCount +
-            "개가 표시됐어요.";
-        }
+    // 선택 지역에 맞춰 지도 이동
+    refreshMap(function() {
 
-      } catch (error) {
-        statusBox.textContent =
-          "데이터 조회 실패: " +
-          error.message;
-        console.error(error);
+      if (validCount === 1) {
 
-      } finally {
-        loading = false;
-        searchButton.disabled = false;
-      }
-    }
-
-    // 상세정보 행 만들기
-    function createDetailRow(label, value) {
-      const row =
-        document.createElement("div");
-      row.className = "detail-row";
-
-      const labelElement =
-        document.createElement("span");
-      labelElement.className = "detail-label";
-      labelElement.textContent = label;
-
-      const valueElement =
-        document.createElement("span");
-      valueElement.className = "detail-value";
-      valueElement.textContent = value;
-
-      row.appendChild(labelElement);
-      row.appendChild(valueElement);
-
-      return row;
-    }
-
-    // 마커 클릭 시 왼쪽 정보창 표시
-    function selectAccident(marker, item) {
-
-      selectedPosition = marker.getPosition();
-      detailContent.replaceChildren();
-
-      const name =
-        document.createElement("div");
-      name.className = "region-name";
-      name.textContent =
-        item.name || "사고다발지역";
-
-      detailContent.appendChild(name);
-
-      const rows = [
-        ["사고 건수", item.accidentCount + "건"],
-        ["사상자 수", item.casualtyCount + "명"],
-        ["사망자 수", item.deathCount + "명"],
-        ["중상자 수", item.seriousCount + "명"],
-        ["경상자 수", item.minorCount + "명"],
-        ["부상신고자 수",
-          item.reportedInjuryCount + "명"]
-      ];
-
-      rows.forEach(function(row) {
-        detailContent.appendChild(
-          createDetailRow(row[0], row[1])
+        map.setCenter(
+          markers[0].getPosition()
         );
-      });
+        map.setLevel(5);
 
-      const scoreBox =
-        document.createElement("div");
-      scoreBox.className = "score-box";
+      } else if (validCount > 1) {
 
-      const scoreTitle =
-        document.createElement("div");
-      scoreTitle.textContent =
-        "자체 분석 위험도";
+        map.setBounds(
+          bounds, 60, 60, 60, 60
+        );
 
-      const scoreNumber =
-        document.createElement("strong");
-      scoreNumber.className = "score-number";
-      scoreNumber.textContent =
-        item.riskScore + "점";
+      } else if (district === "all") {
 
-      scoreBox.appendChild(scoreTitle);
-      scoreBox.appendChild(scoreNumber);
-      detailContent.appendChild(scoreBox);
+        map.setCenter(
+          new kakao.maps.LatLng(
+            SEOUL_CENTER.lat,
+            SEOUL_CENTER.lng
+          )
+        );
 
-      const note =
-        document.createElement("p");
-      note.className = "score-caption";
-      note.textContent =
-        "공식 위험등급이 아닌 자체 분석 점수입니다.";
-      detailContent.appendChild(note);
+        map.setLevel(9);
+      }
+    });
 
-      mapLayout.classList.add("active");
+    const districtName =
+      district === "all"
+        ? "서울 전체"
+        : "서울 " +
+          districtSelect.options[
+            districtSelect.selectedIndex
+          ].text;
 
-      updateMapHeight();
-      refreshMap(selectedPosition);
+    document.getElementById(
+      "currentRegion"
+    ).textContent =
+      "현재 표시: " +
+      currentYear + "년 " + districtName;
+
+    if (validCount === 0) {
+
+      statusBox.textContent =
+        districtName +
+        "에서 조회된 사고다발지역 마커가 없어요. " +
+        "다른 지역이나 연도를 선택해 주세요.";
+
+    } else {
+
+      statusBox.textContent =
+        currentYear + "년 " + districtName +
+        " 사고다발지역 " +
+        validCount + "곳 표시 완료!";
+    }
+  }
+
+  // =====================================
+  // 필터 적용
+  // =====================================
+
+  async function applyFilter() {
+
+    if (loading) return;
+
+    const year = yearSelect.value;
+    const district = districtSelect.value;
+
+    // 연도가 바뀌었을 때만 새 데이터 조회
+    if (currentYear !== year ||
+        allAccidents.length === 0) {
+
+      const success =
+        await loadAllAccidents(year);
+
+      if (!success) return;
+    }
+
+    displayMarkers(district);
+  }
+
+  // =====================================
+  // 전체 보기
+  // =====================================
+
+  async function resetFilter() {
+
+    if (loading) return;
+
+    districtSelect.value = "all";
+
+    await applyFilter();
+  }
+
+  // =====================================
+  // 왼쪽 정보창의 정보 행
+  // =====================================
+
+  function createDetailRow(label, value) {
+
+    const row =
+      document.createElement("div");
+    row.className = "detail-row";
+
+    const labelElement =
+      document.createElement("span");
+    labelElement.className = "detail-label";
+    labelElement.textContent = label;
+
+    const valueElement =
+      document.createElement("span");
+    valueElement.className = "detail-value";
+    valueElement.textContent = value;
+
+    row.appendChild(labelElement);
+    row.appendChild(valueElement);
+
+    return row;
+  }
+
+  // =====================================
+  // 마커 클릭 시 상세정보 표시
+  // =====================================
+
+  function selectAccident(marker, item) {
+
+    selectedPosition = marker.getPosition();
+    detailContent.replaceChildren();
+
+    const name =
+      document.createElement("div");
+
+    name.className = "region-name";
+    name.textContent =
+      item.name || "사고다발지역";
+
+    detailContent.appendChild(name);
+
+    const rows = [
+      ["사고 건수", item.accidentCount + "건"],
+      ["사상자 수", item.casualtyCount + "명"],
+      ["사망자 수", item.deathCount + "명"],
+      ["중상자 수", item.seriousCount + "명"],
+      ["경상자 수", item.minorCount + "명"],
+      ["부상신고자 수",
+        item.reportedInjuryCount + "명"]
+    ];
+
+    rows.forEach(function(row) {
+
+      detailContent.appendChild(
+        createDetailRow(
+          row[0],
+          row[1]
+        )
+      );
+    });
+
+    const scoreBox =
+      document.createElement("div");
+    scoreBox.className = "score-box";
+
+    const scoreTitle =
+      document.createElement("div");
+    scoreTitle.textContent =
+      "자체 분석 위험도";
+
+    const scoreNumber =
+      document.createElement("strong");
+    scoreNumber.className = "score-number";
+    scoreNumber.textContent =
+      item.riskScore + "점";
+
+    scoreBox.appendChild(scoreTitle);
+    scoreBox.appendChild(scoreNumber);
+    detailContent.appendChild(scoreBox);
+
+    const note =
+      document.createElement("p");
+    note.className = "score-caption";
+    note.textContent =
+      "공식 위험등급이 아닌 과제용 자체 분석 점수입니다.";
+
+    detailContent.appendChild(note);
+
+    // 왼쪽 정보창 열기
+    mapLayout.classList.add("active");
+
+    updateMapHeight();
+
+    // 선택한 마커를 오른쪽 지도 중앙으로
+    refreshMap(function() {
+
+      map.setCenter(selectedPosition);
 
       if (map.getLevel() > 5) {
         map.setLevel(5);
       }
-
-      statusBox.textContent =
-        "선택한 사고지역: " + item.name +
-        " / 위험도 " + item.riskScore + "점";
-    }
-
-    // 왼쪽 정보창과 지도 높이 맞추기
-    function updateMapHeight() {
-
-      if (!mapLayout.classList.contains("active")) {
-        mapElement.style.height = "";
-        return;
-      }
-
-      if (window.innerWidth <= 760) {
-        mapElement.style.height = "400px";
-      } else {
-        const height =
-          detailPanel.getBoundingClientRect().height;
-
-        mapElement.style.height =
-          Math.max(480, height) + "px";
-      }
-    }
-
-    // 상세정보창 닫기
-    function closeDetailPanel() {
-
-      const center =
-        selectedPosition ||
-        (map ? map.getCenter() : null);
-
-      mapLayout.classList.remove("active");
-      detailContent.replaceChildren();
-      mapElement.style.height = "";
-      selectedPosition = null;
-
-      refreshMap(center);
-    }
-
-    window.addEventListener("resize", function() {
-      if (!map) return;
-
-      const center =
-        selectedPosition || map.getCenter();
-
-      updateMapHeight();
-      refreshMap(center);
     });
 
-    window.addEventListener("load", initMap);
-  </script>
+    statusBox.textContent =
+      "선택한 사고지역: " +
+      item.name +
+      " / 위험도 " +
+      item.riskScore + "점";
+  }
+
+  // =====================================
+  // 지도와 정보창 높이 맞추기
+  // =====================================
+
+  function updateMapHeight() {
+
+    if (!mapLayout.classList.contains("active")) {
+      mapElement.style.height = "";
+      return;
+    }
+
+    if (window.innerWidth <= 760) {
+
+      mapElement.style.height = "400px";
+
+    } else {
+
+      const height =
+        detailPanel.getBoundingClientRect().height;
+
+      mapElement.style.height =
+        Math.max(480, height) + "px";
+    }
+  }
+
+  // =====================================
+  // 정보창 닫기
+  // =====================================
+
+  function closeDetailPanel() {
+
+    const center =
+      selectedPosition ||
+      (map ? map.getCenter() : null);
+
+    mapLayout.classList.remove("active");
+    detailContent.replaceChildren();
+    mapElement.style.height = "";
+    selectedPosition = null;
+
+    refreshMap(function() {
+      if (center) map.setCenter(center);
+    });
+  }
+
+  // =====================================
+  // 화면 크기 변경 대응
+  // =====================================
+
+  window.addEventListener("resize", function() {
+
+    if (!map) return;
+
+    const center =
+      selectedPosition || map.getCenter();
+
+    updateMapHeight();
+
+    refreshMap(function() {
+      map.setCenter(center);
+    });
+  });
+
+  // =====================================
+  // 시작: 서울 전체 데이터 표시
+  // =====================================
+
+  async function startApp() {
+
+    initMap();
+
+    if (!map) return;
+
+    // 서울 전체 데이터를 불러와 전체 마커 표시
+    if (loading) {
+      // initMap에서 시작한 요청 완료를 기다리는 대신
+      // 아래 시작 흐름에서 직접 처리하도록 함
+      return;
+    }
+  }
+
+  // 초기 지도 생성 후 전체 조회
+  window.addEventListener("load", async function() {
+
+    if (!window.kakao || !kakao.maps) {
+      statusBox.textContent =
+        "카카오맵 연결에 실패했어요.";
+      return;
+    }
+
+    map = new kakao.maps.Map(mapElement, {
+      center: new kakao.maps.LatLng(
+        SEOUL_CENTER.lat,
+        SEOUL_CENTER.lng
+      ),
+      level: 9
+    });
+
+    const success =
+      await loadAllAccidents("2023");
+
+    if (success) {
+      displayMarkers("all");
+    }
+  });
+
+</script>
 </body>
 </html>
