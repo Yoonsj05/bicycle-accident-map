@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>프로젝트 소개 | 자전거 사고 위험지역 분석기</title>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <header>
+    <h1>자전거 사고 위험지역 분석기</h1>
+    <p>공공데이터 기반 자전거 교통사고 위험지역 분석</p>
+  </header>
+
+  <nav>
+    <a href="index.html">사고 지도</a>
+    <a href="about.html">프로젝트 소개</a>
+    <a href="analysis.html">사고 분석</a>
+  </nav>
+
+  <main>
+
+    <section class="card">
+      <h2>프로젝트 소개</h2>
+
+      <p class="description">
+        자전거 사고 위험지역 분석기는
+        공공데이터포털에서 제공하는
+        자전거 교통사고 다발지역 정보를 활용하여
+        사고 발생 위치와 위험도를
+        쉽게 확인할 수 있도록 제작한 웹앱입니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>프로젝트 제작 목적</h2>
+
+      <p class="description">
+        자전거 이용자가 사고가 집중적으로
+        발생한 지역을 지도에서 쉽게 확인하고,
+        지역별 사고 현황을 비교할 수 있도록
+        정보를 제공하는 것이 목표입니다.
+      </p>
+
+      <p class="description">
+        사고 발생 위치를 시각화하고
+        사고 건수와 인명피해 데이터를 분석하여
+        자전거 교통안전에 대한 관심을
+        높이고자 합니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>주요 기능</h2>
+
+      <p class="description">
+        <strong>사고지역 지도</strong><br>
+        자전거 사고다발지역을 카카오맵에
+        마커로 표시합니다.
+      </p>
+
+      <p class="description">
+        <strong>지역별 필터</strong><br>
+        서울 전체 또는 선택한 자치구의
+        사고다발지역을 확인할 수 있습니다.
+      </p>
+
+      <p class="description">
+        <strong>연도별 사고 현황</strong><br>
+        여러 연도의 사고다발지역 정보를 통합하고,
+        사고지역별 연도별 기록을 표로 비교합니다.
+      </p>
+
+      <p class="description">
+        <strong>사고 위험도 분석</strong><br>
+        사고 건수와 인명피해를 바탕으로
+        자체 위험도 점수를 계산하고
+        사고지역을 비교합니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>위험도 분석 기준</h2>
+
+      <p class="description">
+        본 프로젝트는 사고 건수와
+        인명피해의 심각성을 반영한
+        자체 위험도 점수를 사용합니다.
+      </p>
+
+      <p>
+        사고 건수 × 3<br>
+        사망자 수 × 10<br>
+        중상자 수 × 5<br>
+        경상자 수 × 2<br>
+        부상신고자 수 × 1
+      </p>
+
+      <p class="description">
+        여러 연도를 통합하여 분석하는 경우
+        연도별 점수를 합산합니다.
+      </p>
+
+      <p class="description">
+        해당 점수는 공식 위험등급이나
+        실제 사고 발생 확률을 의미하지 않으며,
+        자전거 통행량이나 도로 환경 등은
+        반영하지 않은 과제용 지표입니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>데이터 및 사용 기술</h2>
+
+      <p class="description">
+        <strong>데이터 출처</strong><br>
+        공공데이터포털<br>
+        한국도로교통공단 자전거 교통사고 다발지역
+      </p>
+
+      <p class="description">
+        <strong>사용 기술</strong><br>
+        HTML, CSS, JavaScript<br>
+        공공데이터 OpenAPI(JSON)<br>
+        Google Apps Script<br>
+        Kakao Maps JavaScript API<br>
+        GitHub Pages
+      </p>
+
+      <p class="description">
+        현재 분석 대상은 서울특별시이며,
+        2021~2023년 사고다발지역 데이터를
+        통합하여 활용할 예정입니다.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>데이터 이용 시 주의사항</h2>
+
+      <p class="description">
+        제공되는 자료는 모든 자전거 사고를
+        포함하는 데이터가 아니라,
+        일정 기준 이상 사고가 집중된
+        지역에 대한 정보입니다.
+      </p>
+
+      <p class="description">
+        따라서 지도에 표시되지 않은 장소가
+        안전하다는 의미는 아니며,
+        실제 자전거 이용 시에는
+        교통법규와 주변 도로 상황을
+        함께 확인해야 합니다.
+      </p>
+    </section>
+
+  </main>
+
+  <footer>
+    모바일프로그래밍 중간고사 프로젝트
+    <br>
+    자료 출처: 한국도로교통공단
+  </footer>
+
+</body>
+</html>
