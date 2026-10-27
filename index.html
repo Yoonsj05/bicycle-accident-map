@@ -3,202 +3,231 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
   <title>BIKE SAFE | 사고 지도</title>
 
-  <!-- 캐시 갱신을 위한 버전 번호 -->
-  <link rel="stylesheet" href="./css/style.css?v=20261028-0532">
+  <link rel="stylesheet"
+        href="./css/style.css?v=panel20261028">
 </head>
 
 <body class="bike-map-page">
 
-<div class="browser-shell">
+  <div class="browser-shell">
 
-  <!-- 브라우저 상단 -->
-  <header class="browser-bar">
+    <header class="browser-bar">
 
-    <div class="window-controls" aria-hidden="true">
-      <span class="window-dot red"></span>
-      <span class="window-dot yellow"></span>
-      <span class="window-dot green"></span>
-    </div>
+      <div class="window-controls" aria-hidden="true">
+        <span class="window-dot red"></span>
+        <span class="window-dot yellow"></span>
+        <span class="window-dot green"></span>
+      </div>
 
-    <nav class="browser-tabs" aria-label="페이지 메뉴">
-      <a href="index.html"
-         class="browser-tab active"
-         aria-current="page">
-        🚲 사고 지도
-      </a>
+      <nav class="browser-tabs" aria-label="페이지 메뉴">
 
-      <a href="analysis.html" class="browser-tab">
-        ▥ 사고 분석
-      </a>
+        <a href="index.html"
+           class="browser-tab active"
+           aria-current="page">
+          <span class="tab-icon">🚲</span>
+          사고 지도
+        </a>
 
-      <a href="about.html" class="browser-tab">
-        ⓘ 프로젝트 소개
-      </a>
-    </nav>
+        <a href="analysis.html" class="browser-tab">
+          <span class="tab-icon">▥</span>
+          사고 분석
+        </a>
 
-    <!-- 오른쪽 로고 -->
-    <div class="browser-brand">
-      <div class="brand-logo">
+        <a href="about.html" class="browser-tab">
+          <span class="tab-icon">ⓘ</span>
+          프로젝트 소개
+        </a>
 
-        <svg class="bike-logo-icon"
-             xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 64 64"
-             fill="none"
-             stroke="#17558c"
-             stroke-width="3.8"
-             stroke-linecap="round"
-             stroke-linejoin="round"
-             aria-hidden="true">
+      </nav>
 
-          <circle cx="14" cy="45" r="11"/>
-          <circle cx="51" cy="45" r="11"/>
-          <path d="M14 45 L26 25 L38 45 L14 45"/>
-          <path d="M38 45 L51 45 L40 21 L34 21"/>
-          <path d="M26 25 L23 19 L18 19"/>
-          <path d="M26 25 L40 25"/>
-          <path d="M38 15 L44 15"/>
-        </svg>
+      <div class="browser-brand">
+        <div class="brand-logo">
 
-        <div class="brand-text">
-          <div class="brand-name">BIKE SAFE</div>
-          <div class="brand-subtitle">
-            서울 자전거 사고 위험지역 분석기
+          <svg class="bike-logo-icon"
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 64 64"
+               fill="none"
+               stroke="#17558c"
+               stroke-width="3.8"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+
+            <circle cx="14" cy="45" r="11"/>
+            <circle cx="51" cy="45" r="11"/>
+            <path d="M14 45 L26 25 L38 45 L14 45"/>
+            <path d="M38 45 L51 45 L40 21 L34 21"/>
+            <path d="M26 25 L23 19 L18 19"/>
+            <path d="M26 25 L40 25"/>
+            <path d="M38 15 L44 15"/>
+          </svg>
+
+          <div class="brand-text">
+            <div class="brand-name">BIKE SAFE</div>
+            <div class="brand-subtitle">
+              서울 자전거 사고 위험지역 분석기
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </header>
+
+    <main class="workspace map-workspace">
+
+      <!-- active 상태면 좌측 패널 + 우측 지도 -->
+      <div id="mapLayout" class="map-layout active">
+
+        <div id="map"
+             aria-label="서울 자전거 사고다발지역 지도">
+        </div>
+
+        <!-- 최초 접속 시 기본으로 열려 있음 -->
+        <aside id="detailPanel"
+               class="detail-panel"
+               aria-label="사고지역 상세정보">
+
+          <div class="panel-header">
+            <h2 id="detailTitle" class="panel-title">
+              서울 전체 사고 현황
+            </h2>
+
+            <button type="button"
+                    class="close-button"
+                    onclick="closeDetailPanel()"
+                    aria-label="패널 닫기">
+              &times;
+            </button>
+          </div>
+
+          <div id="detailContent">
+            <p class="panel-loading">
+              서울 전체 사고지역 정보를 불러오고 있어요.
+            </p>
+          </div>
+
+        </aside>
+
+        <!-- 패널을 닫으면 다시 나타나는 버튼 -->
+        <button id="openOverviewButton"
+                type="button"
+                class="open-overview-button"
+                onclick="showSeoulOverview()"
+                aria-label="서울 전체 현황 패널 열기"
+                hidden>
+          <span aria-hidden="true">▤</span>
+          서울 전체 현황
+        </button>
+
+        <!-- 오른쪽 위 지역 선택 -->
+        <div class="floating-filter">
+
+          <label for="district">
+            <span aria-hidden="true">📍</span>
+            지역 선택
+          </label>
+
+          <select id="district" onchange="applyFilter()">
+            <option value="all">서울 전체</option>
+            <option value="680">강남구</option>
+            <option value="740">강동구</option>
+            <option value="305">강북구</option>
+            <option value="500">강서구</option>
+            <option value="620">관악구</option>
+            <option value="215">광진구</option>
+            <option value="530">구로구</option>
+            <option value="545">금천구</option>
+            <option value="350">노원구</option>
+            <option value="320">도봉구</option>
+            <option value="230">동대문구</option>
+            <option value="590">동작구</option>
+            <option value="440">마포구</option>
+            <option value="410">서대문구</option>
+            <option value="650">서초구</option>
+            <option value="200">성동구</option>
+            <option value="290">성북구</option>
+            <option value="710">송파구</option>
+            <option value="470">양천구</option>
+            <option value="560">영등포구</option>
+            <option value="170">용산구</option>
+            <option value="380">은평구</option>
+            <option value="110">종로구</option>
+            <option value="140">중구</option>
+            <option value="260">중랑구</option>
+          </select>
+
+          <p class="filter-caption">
+            2021~2023년 통합
+          </p>
+        </div>
+
+        <div id="status" class="status map-status"
+             role="status">
+          사고지역 데이터를 불러오는 중...
+        </div>
+
+        <div class="risk-legend-bar">
+
+          <div class="legend-heading">
+            <strong>위험도 점수</strong>
+            <span>서울 전체 백분위 기준</span>
+          </div>
+
+          <div class="legend-scale">
+
+            <div class="legend-segment">
+              <span>주의 · 계산 중</span>
+              <span class="legend-line low"></span>
+            </div>
+
+            <div class="legend-segment">
+              <span>높음 · 계산 중</span>
+              <span class="legend-line medium"></span>
+            </div>
+
+            <div class="legend-segment">
+              <span>매우 높음 · 계산 중</span>
+              <span class="legend-line high"></span>
+            </div>
+
           </div>
         </div>
 
       </div>
-    </div>
 
-  </header>
-
-  <main class="workspace map-workspace">
-
-    <div id="mapLayout" class="map-layout">
-
-      <!-- 지도 -->
-      <div id="map"
-           aria-label="서울 자전거 사고다발지역 지도">
+      <!-- 기존 JavaScript 호환용 -->
+      <div class="data-only" hidden aria-hidden="true">
+        <span id="spotCount"></span>
+        <span id="accidentCount"></span>
+        <span id="casualtyCount"></span>
+        <span id="currentRegion"></span>
+        <div id="mapRankingContent"></div>
+        <button id="filterButton" type="button">
+          필터 적용
+        </button>
+        <button id="resetButton" type="button">
+          전체 보기
+        </button>
       </div>
 
-      <!-- 마커를 클릭할 때만 나타나는 왼쪽 정보창 -->
-      <aside id="detailPanel"
-             class="detail-panel"
-             aria-label="사고지역 상세정보">
+    </main>
 
-        <div class="panel-header">
-          <h2 class="panel-title">사고지역 상세정보</h2>
+    <footer class="app-footer">
+      공공데이터포털 · 한국도로교통공단 · BIKE SAFE
+    </footer>
 
-          <button type="button"
-                  class="close-button"
-                  onclick="closeDetailPanel()"
-                  aria-label="상세정보 닫기">
-            &times;
-          </button>
-        </div>
+  </div>
 
-        <div id="detailContent"></div>
-      </aside>
+  <!-- 기존 카카오 JavaScript 키를 넣으세요 -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
 
-      <!-- 오른쪽 위 지역 필터 -->
-      <div class="floating-filter">
-
-        <label for="district">📍 지역 선택</label>
-
-        <select id="district" onchange="applyFilter()">
-          <option value="all">서울 전체</option>
-          <option value="680">강남구</option>
-          <option value="740">강동구</option>
-          <option value="305">강북구</option>
-          <option value="500">강서구</option>
-          <option value="620">관악구</option>
-          <option value="215">광진구</option>
-          <option value="530">구로구</option>
-          <option value="545">금천구</option>
-          <option value="350">노원구</option>
-          <option value="320">도봉구</option>
-          <option value="230">동대문구</option>
-          <option value="590">동작구</option>
-          <option value="440">마포구</option>
-          <option value="410">서대문구</option>
-          <option value="650">서초구</option>
-          <option value="200">성동구</option>
-          <option value="290">성북구</option>
-          <option value="710">송파구</option>
-          <option value="470">양천구</option>
-          <option value="560">영등포구</option>
-          <option value="170">용산구</option>
-          <option value="380">은평구</option>
-          <option value="110">종로구</option>
-          <option value="140">중구</option>
-          <option value="260">중랑구</option>
-        </select>
-
-        <p class="filter-caption">2021~2023년 통합</p>
-      </div>
-
-      <!-- 조회 상태 -->
-      <div id="status" class="status map-status" role="status">
-        사고 데이터를 불러오고 있어요.
-      </div>
-
-      <!-- 얇은 위험도 범례 -->
-      <div class="risk-legend-bar">
-
-        <div class="legend-heading">
-          <strong>위험도 점수</strong>
-          <span>자체 분석 기준</span>
-        </div>
-
-        <div class="legend-scale">
-
-          <div class="legend-segment">
-            <span>주의 · 1~30점</span>
-            <div class="legend-line low"></div>
-          </div>
-
-          <div class="legend-segment">
-            <span>높음 · 31~70점</span>
-            <div class="legend-line medium"></div>
-          </div>
-
-          <div class="legend-segment">
-            <span>매우 높음 · 71점 이상</span>
-            <div class="legend-line high"></div>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- 이전 JavaScript와 호환되는 숨김 요소 -->
-    <div class="data-only" hidden aria-hidden="true">
-      <span id="spotCount"></span>
-      <span id="accidentCount"></span>
-      <span id="casualtyCount"></span>
-      <span id="currentRegion"></span>
-      <div id="mapRankingContent"></div>
-      <button id="filterButton" type="button">필터</button>
-      <button id="resetButton" type="button">전체</button>
-    </div>
-
-  </main>
-
-  <footer class="app-footer">
-    공공데이터포털 · 한국도로교통공단 · BIKE SAFE
-  </footer>
-
-</div>
-
-<!-- 자신의 카카오 JavaScript 키 입력 -->
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
-
-<script src="./js/map.js"></script>
+  <script src="./js/map.js?v=panel20261028"></script>
 
 </body>
 </html>
