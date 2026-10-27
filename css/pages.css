@@ -1,0 +1,665 @@
+
+/* =========================================
+   BIKE SAFE
+   사고 분석 · 프로젝트 소개 전용 CSS
+   ========================================= */
+
+.bike-subpage .subpage-workspace {
+  min-height: 690px;
+  padding: 32px 36px 40px;
+  background: #f5f9fe;
+}
+
+.bike-subpage [hidden] {
+  display: none !important;
+}
+
+.bike-subpage .subpage-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 25px;
+}
+
+.bike-subpage .subpage-eyebrow,
+.bike-subpage .section-kicker {
+  display: block;
+  margin-bottom: 9px;
+  color: #708ca8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.bike-subpage .subpage-heading h1 {
+  margin: 0;
+  color: #193e65;
+  font-size: 28px;
+  font-weight: 850;
+}
+
+.bike-subpage .subpage-heading p {
+  margin: 8px 0 0;
+  color: #70839a;
+  font-size: 13px;
+}
+
+.bike-subpage .period-label {
+  padding: 11px 17px;
+  border: 1px solid #d6e4f1;
+  border-radius: 10px;
+  background: white;
+  color: #476b8c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================================
+   소개 페이지 내부 탭
+   ========================================= */
+
+.bike-subpage .subpage-surface {
+  min-height: 465px;
+  overflow: hidden;
+  border: 1px solid #dbe7f1;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 22px rgba(25,60,95,.06);
+}
+
+.bike-subpage .info-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #dce6ef;
+  background: #f6f9fd;
+}
+
+.bike-subpage .info-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 10px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #6b829a;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.bike-subpage .info-tab:hover {
+  background: #eaf2fa;
+}
+
+.bike-subpage .info-tab.active {
+  border-bottom-color: #2463a0;
+  background: #fff;
+  color: #193e65;
+}
+
+.bike-subpage .info-panel {
+  padding: 31px 35px;
+}
+
+.bike-subpage .panel-intro {
+  margin-bottom: 25px;
+}
+
+.bike-subpage .panel-intro h2 {
+  margin: 0;
+  color: #193e65;
+  font-size: 22px;
+}
+
+.bike-subpage .panel-intro p {
+  margin: 9px 0 0;
+  color: #71869b;
+  font-size: 13px;
+}
+
+/* 소개: 목적 */
+
+.bike-subpage .feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bike-subpage .feature-tile {
+  min-height: 170px;
+  padding: 23px;
+  border: 1px solid #e1eaf3;
+  border-radius: 13px;
+  background: #f4f9fe;
+}
+
+.bike-subpage .feature-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 47px;
+  height: 47px;
+  margin-bottom: 16px;
+  border-radius: 13px;
+  background: #e1effb;
+  color: #23629c;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.bike-subpage .feature-tile h3,
+.bike-subpage .feature-line h3 {
+  margin: 0 0 6px;
+  color: #193e65;
+  font-size: 16px;
+}
+
+.bike-subpage .feature-tile p,
+.bike-subpage .feature-line p {
+  margin: 0;
+  color: #72869a;
+  font-size: 12px;
+}
+
+/* 소개: 기능 */
+
+.bike-subpage .feature-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.bike-subpage .feature-line {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e1eaf3;
+  border-radius: 12px;
+  background: #f8fbfe;
+}
+
+.bike-subpage .feature-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #e6f1fb;
+  color: #245f98;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* 소개: 위험도 */
+
+.bike-subpage .formula-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.bike-subpage .formula-grid > div {
+  padding: 20px 12px;
+  border: 1px solid #e2ebf4;
+  border-radius: 11px;
+  background: #f5f9fe;
+  text-align: center;
+}
+
+.bike-subpage .formula-grid span {
+  display: block;
+  margin-bottom: 12px;
+  color: #58748f;
+  font-size: 12px;
+}
+
+.bike-subpage .formula-grid strong {
+  color: #193e65;
+  font-size: 24px;
+}
+
+.bike-subpage .risk-explanation {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  margin-top: 23px;
+}
+
+.bike-subpage .risk-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 15px;
+  border-left: 5px solid;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.bike-subpage .risk-band.yellow {
+  border-left-color: #ffc84d;
+}
+
+.bike-subpage .risk-band.orange {
+  border-left-color: #ff963c;
+}
+
+.bike-subpage .risk-band.red {
+  border-left-color: #ff5757;
+}
+
+.bike-subpage .risk-band strong {
+  color: #193e65;
+  font-size: 13px;
+}
+
+.bike-subpage .risk-band span {
+  color: #71869b;
+  font-size: 12px;
+}
+
+.bike-subpage .small-note {
+  margin: 22px 0 0;
+  color: #71869b;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* 소개: 데이터 */
+
+.bike-subpage .data-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bike-subpage .data-facts > div {
+  padding: 15px 20px;
+  border: 1px solid #e1eaf3;
+  border-radius: 10px;
+  background: #f8fbfe;
+}
+
+.bike-subpage .data-facts span {
+  display: block;
+  margin-bottom: 7px;
+  color: #71869b;
+  font-size: 12px;
+}
+
+.bike-subpage .data-facts strong {
+  color: #193e65;
+  font-size: 15px;
+}
+
+/* 소개: 기술 */
+
+.bike-subpage .keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px;
+}
+
+.bike-subpage .keyword-chip {
+  display: inline-block;
+  padding: 12px 17px;
+  border-radius: 9px;
+  background: #e9f3fc;
+  color: #235b8b;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.bike-subpage .process-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 32px;
+  padding: 18px;
+  border-radius: 11px;
+  background: #f6f9fd;
+  color: #58748f;
+  font-size: 13px;
+}
+
+/* =========================================
+   사고 분석 페이지
+   ========================================= */
+
+.bike-subpage .analysis-filter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+}
+
+.bike-subpage .analysis-filter label {
+  color: #58748f;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.bike-subpage .analysis-filter select {
+  min-width: 155px;
+  min-height: 41px;
+  padding: 0 12px;
+  border: 1px solid #d4e1ed;
+  border-radius: 9px;
+  background: #fff;
+  color: #193e65;
+}
+
+.bike-subpage .analysis-filter .button {
+  min-height: 41px;
+  padding: 0 15px;
+  white-space: nowrap;
+}
+
+.bike-subpage .analytics-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.bike-subpage .analytics-stat {
+  padding: 20px;
+  border: 1px solid #e0eaf3;
+  border-radius: 13px;
+  background: white;
+}
+
+.bike-subpage .analytics-stat.stat-red {
+  background: #fff1f1;
+}
+
+.bike-subpage .analytics-stat.stat-blue {
+  background: #edf5fd;
+}
+
+.bike-subpage .analytics-stat.stat-green {
+  background: #ecfaf5;
+}
+
+.bike-subpage .analytics-stat-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #58748f;
+  font-size: 13px;
+}
+
+.bike-subpage .analytics-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.8);
+  color: #2463a0;
+  font-size: 21px;
+}
+
+.bike-subpage .analytics-stat strong {
+  display: block;
+  margin-top: 14px;
+  color: #193e65;
+  font-size: 30px;
+}
+
+.bike-subpage .analytics-stat small {
+  margin-left: 4px;
+  font-size: 14px;
+}
+
+.bike-subpage .analytics-status {
+  margin-bottom: 18px;
+  padding: 11px 15px;
+  border: 1px solid #dce8f3;
+  border-radius: 9px;
+  background: #edf5fc;
+  color: #58748f;
+  font-size: 12px;
+}
+
+.bike-subpage .analytics-panels {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  align-items: stretch;
+  gap: 17px;
+}
+
+.bike-subpage .analytics-panel {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #dde8f2;
+  border-radius: 13px;
+  background: white;
+  box-shadow: 0 4px 15px rgba(25,60,95,.05);
+}
+
+.bike-subpage .analytics-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 17px;
+}
+
+.bike-subpage .analytics-panel-heading h2 {
+  margin: 0;
+  color: #193e65;
+  font-size: 18px;
+}
+
+.bike-subpage .analytics-panel-heading > span {
+  color: #7990a6;
+  font-size: 11px;
+}
+
+.bike-subpage .ranking-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #eaf0f5;
+}
+
+.bike-subpage .ranking-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 9px;
+  margin-bottom: 7px;
+  color: #193e65;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.bike-subpage .ranking-title span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bike-subpage .ranking-info {
+  margin: 0 0 9px;
+  color: #70869b;
+  font-size: 11px;
+}
+
+.bike-subpage .bar-background {
+  height: 10px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #e9eff5;
+}
+
+.bike-subpage .bar {
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(90deg,#ffad4e,#f76161);
+}
+
+/* 연도별 막대그래프 */
+
+.bike-subpage .yearly-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 15px;
+  height: 230px;
+  padding: 18px 8px 0;
+  border-bottom: 1px solid #d9e5ef;
+}
+
+.bike-subpage .year-group {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.bike-subpage .year-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 180px;
+}
+
+.bike-subpage .year-bar-wrap {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  max-width: 46px;
+}
+
+.bike-subpage .year-bar {
+  position: relative;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 5px 5px 0 0;
+}
+
+.bike-subpage .year-bar.blue {
+  background: #5297e6;
+}
+
+.bike-subpage .year-bar.red {
+  background: #fb746a;
+}
+
+.bike-subpage .year-bar-value {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: #486985;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.bike-subpage .year-name {
+  color: #58748f;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.bike-subpage .chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 17px;
+  margin-top: 16px;
+  color: #647b92;
+  font-size: 11px;
+}
+
+.bike-subpage .chart-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bike-subpage .chart-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.bike-subpage .chart-legend-dot.blue {
+  background: #5297e6;
+}
+
+.bike-subpage .chart-legend-dot.red {
+  background: #fb746a;
+}
+
+.bike-subpage .analytics-wide {
+  margin-top: 18px;
+}
+
+.bike-subpage .table-scroll {
+  overflow-x: auto;
+}
+
+.bike-subpage .analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.bike-subpage .analytics-table th {
+  padding: 13px 9px;
+  background: #edf5fc;
+  color: #193e65;
+  font-size: 12px;
+}
+
+.bike-subpage .analytics-table td {
+  padding: 13px 9px;
+  border-bottom: 1px solid #e8eff6;
+  color: #486985;
+  font-size: 12px;
+}
+
+.bike-subpage .analysis-coverage,
+.bike-subpage .subpage-note {
+  margin-top: 16px;
+  color: #71869b;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.bike-subpage .analytics-empty {
+  padding: 35px 12px;
+  color: #8296a9;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* 좁은 PC 화면 */
+@media (max-width: 1250px) {
+  .bike-subpage .subpage-workspace {
+    padding: 24px;
+  }
+
+  .bike-subpage .feature-grid {
+    gap: 10px;
+  }
+
+  .bike-subpage .analytics-panels {
+    grid-template-columns: 1fr 1fr;
+  }
+}
