@@ -1,27 +1,5 @@
-
-/*
-  BIKE SAFE - 지도 기능
-  2021~2023 통합 사고다발지역
-  공공데이터 GAS 연결 / 카카오맵
-*/
-
-// =====================================
-// 1. 설정
-// =====================================
-
-// 기존 GAS 웹 앱 주소로 변경
 const GAS_URL =
   "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
-
-const YEARS = ["2021", "2022", "2023"];
-
-const DISTRICTS = [
-  "680", "740", "305", "500", "620",
-  "215", "530", "545", "350", "320",
-  "230", "590", "440", "410", "650",
-  "200", "290", "710", "470", "560",
-  "170", "380", "110", "140", "260"
-];
 
 const CENTER = {
   latitude: 37.5665,
@@ -35,119 +13,79 @@ let mapMarkers = [];
 let allAccidents = [];
 let groupedAccidents = [];
 let failedRequests = [];
-
+let riskReference = null;
+let riskTools = null;
 let requestCounter = 0;
 let loading = false;
 
-const mapElement =
-  document.getElementById("map");
+const mapElement = document.getElementById("map");
+const mapLayout = document.getElementById("mapLayout");
+const detailPanel = document.getElementById("detailPanel");
+const detailContent = document.getElementById("detailContent");
+const districtSelect = document.getElementById("district");
+const statusBox = document.getElementById("status");
 
-const mapLayout =
-  document.getElementById("mapLayout");
+// 기존 HTML의 onchange / onclick에서 사용
+window.applyFilter = applyFilter;
+window.resetFilter = resetFilter;
+window.closeDetailPanel = closeDetailPanel;
 
-const detailPanel =
-  document.getElementById("detailPanel");
-
-const detailContent =
-  document.getElementById("detailContent");
-
-const districtSelect =
-  document.getElementById("district");
-
-const statusBox =
-  document.getElementById("status");
-
-// =====================================
-// 2. 유틸리티
-// =====================================
-
-function numberValue(value) {
-  return Number(value) || 0;
+function setText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
 }
 
 function formatNumber(value) {
-  return numberValue(value).toLocaleString("ko-KR");
+  return (Number(value) || 0).toLocaleString("ko-KR");
 }
-
-function setText(id, text) {
-  const element = document.getElementById(id);
-
-  if (element) {
-    element.textContent = text;
-  }
-}
-
-// =====================================
-// 3. GAS JSONP 요청
-// =====================================
 
 function requestJSONP(url) {
-
-  return new Promise(function(resolve, reject) {
-
-    const callbackName =
+  return new Promise((resolve, reject) => {
+    const callback =
       "bikeMapCallback" + (++requestCounter);
 
     const script = document.createElement("script");
+    let completed = false;
 
-    let finished = false;
-
-    const timer = setTimeout(function() {
+    const timer = setTimeout(() => {
       finish(new Error("요청 시간 초과"));
     }, 30000);
 
     function finish(error, data) {
-
-      if (finished) return;
-      finished = true;
+      if (completed) return;
+      completed = true;
 
       clearTimeout(timer);
       script.remove();
 
       if (error) {
-
-        // 늦은 JSONP 응답에 대비
-        window[callbackName] = function() {};
-
+        window[callback] = function() {};
         reject(error);
-
       } else {
-
-        delete window[callbackName];
+        delete window[callback];
         resolve(data);
       }
     }
 
-    window[callbackName] = function(data) {
-      finish(null, data);
-    };
-
-    script.onerror = function() {
+    window[callback] = data => finish(null, data);
+    script.onerror = () =>
       finish(new Error("GAS 연결 실패"));
-    };
 
     script.src =
       url +
       (url.includes("?") ? "&" : "?") +
-      "callback=" +
-      encodeURIComponent(callbackName);
+      "callback=" + encodeURIComponent(callback);
 
     document.body.appendChild(script);
   });
 }
-
-// =====================================
-// 4. 조회 결과 캐시
-// =====================================
 
 function cacheKey(year, district) {
   return "bicycle_v3_" + year + "_" + district;
 }
 
 function readCache(year, district) {
-
   try {
-
     const text = localStorage.getItem(
       cacheKey(year, district)
     );
@@ -165,40 +103,28 @@ function readCache(year, district) {
     }
 
     return saved.items;
-
   } catch (error) {
     return null;
   }
 }
 
 function saveCache(year, district, items) {
-
   try {
-
     localStorage.setItem(
       cacheKey(year, district),
       JSON.stringify({
         savedAt: Date.now(),
-        items: items
+        items
       })
     );
-
   } catch (error) {
-    console.warn("지도 캐시 저장 생략");
+    console.warn("캐시 저장 생략", error);
   }
 }
 
-// =====================================
-// 5. 개별 API 조회
-// =====================================
-
 async function fetchAccidents(year, district) {
-
   const cached = readCache(year, district);
-
-  if (cached !== null) {
-    return cached;
-  }
+  if (cached !== null) return cached;
 
   const url =
     GAS_URL +
@@ -212,7 +138,7 @@ async function fetchAccidents(year, district) {
     throw new Error(
       data && data.error
         ? data.error
-        : "사고 데이터 조회 오류"
+        : "데이터 조회 실패"
     );
   }
 
@@ -220,35 +146,25 @@ async function fetchAccidents(year, district) {
     ? data.accidents
     : [];
 
-  const items = raw.map(function(item) {
-    return {
-      ...item,
-      year: year,
-      districtCode: district
-    };
-  });
+  const items = raw.map(item => ({
+    ...item,
+    year,
+    districtCode: district
+  }));
 
   saveCache(year, district, items);
-
   return items;
 }
 
-// =====================================
-// 6. 전체 데이터 불러오기
-// =====================================
-
 async function loadAllAccidents() {
-
   if (loading) return false;
 
   if (
-    !GAS_URL.startsWith(
-      "https://script.google.com/macros/s/"
-    ) ||
+    !GAS_URL.startsWith("https://script.google.com/macros/s/") ||
     !GAS_URL.endsWith("/exec")
   ) {
     statusBox.textContent =
-      "js/map.js에 GAS 웹 앱 주소를 입력해 줘.";
+      "js/map.js의 GAS 웹 앱 URL을 확인해 줘.";
     return false;
   }
 
@@ -257,242 +173,148 @@ async function loadAllAccidents() {
 
   const jobs = [];
 
-  YEARS.forEach(function(year) {
-
-    DISTRICTS.forEach(function(district) {
-
-      jobs.push({
-        year: year,
-        district: district
-      });
-
+  riskTools.RISK_YEARS.forEach(year => {
+    riskTools.RISK_DISTRICTS.forEach(district => {
+      jobs.push({ year, district });
     });
   });
 
   const results = [];
   const failures = [];
 
-  let nextIndex = 0;
+  let index = 0;
   let completed = 0;
 
   async function worker() {
-
-    while (nextIndex < jobs.length) {
-
-      const job = jobs[nextIndex++];
+    while (index < jobs.length) {
+      const job = jobs[index++];
 
       try {
-
         const items = await fetchAccidents(
           job.year,
           job.district
         );
-
         results.push(...items);
-
       } catch (error) {
-
         failures.push(job);
-
-        console.error(
-          "조회 실패:",
-          job.year,
-          job.district,
-          error
-        );
+        console.error("조회 실패", job, error);
       }
 
       completed++;
-
       statusBox.textContent =
-        "데이터 조회 중 " +
-        completed + " / " + jobs.length;
+        `사고지역 조회 중 ${completed}/${jobs.length}`;
     }
   }
 
   try {
-
     await Promise.all([
-      worker(),
-      worker(),
-      worker()
+      worker(), worker(), worker()
     ]);
 
     if (failures.length === jobs.length) {
-      throw new Error(
-        "모든 사고 데이터 요청에 실패했어."
-      );
+      throw new Error("모든 데이터 조회에 실패했어.");
     }
 
     allAccidents = results;
     failedRequests = failures;
 
-    groupAccidentRecords();
+    groupedAccidents =
+      riskTools.groupRiskAccidents(allAccidents);
+
+    if (failures.length === 0) {
+      // 전 지역·전 연도 조회 성공일 때만 기준 계산
+      riskReference =
+        riskTools.createRiskReference(groupedAccidents);
+
+      riskTools.saveRiskReference(riskReference);
+    } else {
+      // 불완전한 자료로 새 기준을 계산하지 않음
+      riskReference = riskTools.readRiskReference();
+    }
+
+    updateLegend();
 
     return true;
 
   } catch (error) {
-
-    statusBox.textContent =
-      "데이터 조회 실패: " + error.message;
-
+    statusBox.textContent = error.message;
     return false;
-
   } finally {
-
     loading = false;
     districtSelect.disabled = false;
   }
 }
 
-// =====================================
-// 7. 같은 이름의 사고지역 통합
-// =====================================
-
-function groupAccidentRecords() {
-
-  const groups = new Map();
-
-  allAccidents.forEach(function(item) {
-
-    const name = String(item.name || "").trim();
-    const normalizedName = name.replace(/\s+/g, "");
-
-    if (!normalizedName) return;
-
-    const key =
-      item.districtCode + "|" + normalizedName;
-
-    if (!groups.has(key)) {
-
-      groups.set(key, {
-
-        name: name,
-        districtCode: item.districtCode,
-
-        latitude: null,
-        longitude: null,
-
-        accidentCount: 0,
-        casualtyCount: 0,
-        deathCount: 0,
-        seriousCount: 0,
-        minorCount: 0,
-        reportedInjuryCount: 0,
-        riskScore: 0,
-
-        records: {}
-      });
-    }
-
-    const group = groups.get(key);
-
-    if (!group.records[item.year]) {
-
-      group.records[item.year] = {
-
-        accidentCount: 0,
-        casualtyCount: 0,
-        deathCount: 0,
-        seriousCount: 0,
-        minorCount: 0,
-        reportedInjuryCount: 0,
-        riskScore: 0
-      };
-    }
-
-    const fields = [
-      "accidentCount",
-      "casualtyCount",
-      "deathCount",
-      "seriousCount",
-      "minorCount",
-      "reportedInjuryCount",
-      "riskScore"
-    ];
-
-    fields.forEach(function(field) {
-
-      const value = numberValue(item[field]);
-
-      group[field] += value;
-      group.records[item.year][field] += value;
-    });
-
-    const latitude = Number(item.latitude);
-    const longitude = Number(item.longitude);
-
-    if (
-      item.latitude != null &&
-      item.longitude != null &&
-      Number.isFinite(latitude) &&
-      Number.isFinite(longitude) &&
-      latitude >= 33 &&
-      latitude <= 39 &&
-      longitude >= 124 &&
-      longitude <= 132
-    ) {
-      group.latitude = latitude;
-      group.longitude = longitude;
-    }
-  });
-
-  groupedAccidents = Array.from(groups.values());
-}
-
-// =====================================
-// 8. 마커 위험도 색상
-// =====================================
-
 function getRiskLevel(score) {
-
-  if (score >= 71) return "high";
-  if (score >= 31) return "medium";
-
-  return "low";
+  return riskTools.getRiskLevel(score, riskReference);
 }
-
-// =====================================
-// 9. 기존 마커 제거
-// =====================================
 
 function clearMarkers() {
-
-  mapMarkers.forEach(function(overlay) {
+  mapMarkers.forEach(overlay => {
     overlay.setMap(null);
   });
-
   mapMarkers = [];
 }
 
-// =====================================
-// 10. 지도 업데이트
-// =====================================
+function updateLegend() {
+  const legend = document.querySelector(
+    ".risk-legend-bar"
+  );
+
+  if (!legend) return;
+
+  const ranges = riskTools.getRiskRanges(
+    riskReference
+  );
+
+  const segments = legend.querySelectorAll(
+    ".legend-segment"
+  );
+
+  const labels = [
+    "주의 · " + ranges.low,
+    "높음 · " + ranges.medium,
+    "매우 높음 · " + ranges.high
+  ];
+
+  segments.forEach((segment, index) => {
+    const label =
+      segment.querySelector("span");
+
+    if (label) label.textContent = labels[index];
+  });
+
+  const subtitle = legend.querySelector(
+    ".legend-heading span"
+  );
+
+  if (subtitle) {
+    subtitle.textContent = riskReference
+      ? "서울 전체 백분위 기준"
+      : "전체 자료 조회 필요";
+  }
+}
 
 function displayMarkers(district) {
-
-  if (!map) return;
+  if (!map || !riskTools) return;
 
   clearMarkers();
   closeDetailPanel();
 
   const items = district === "all"
     ? groupedAccidents
-    : groupedAccidents.filter(function(item) {
-        return item.districtCode === district;
-      });
+    : groupedAccidents.filter(
+        item => item.districtCode === district
+      );
 
   const bounds = new kakao.maps.LatLngBounds();
   const positions = [];
 
-  items.forEach(function(item) {
-
+  items.forEach(item => {
     if (
       item.latitude == null ||
       item.longitude == null
-    ) {
-      return;
-    }
+    ) return;
 
     const position = new kakao.maps.LatLng(
       item.latitude,
@@ -500,62 +322,58 @@ function displayMarkers(district) {
     );
 
     const button = document.createElement("button");
-
     button.type = "button";
+
+    const level = getRiskLevel(item.riskScore);
+
     button.className =
       "risk-marker " +
-      getRiskLevel(item.riskScore);
+      (level === "unknown" ? "" : level);
+
+    // 기준 계산 불가일 때는 중립색
+    if (level === "unknown") {
+      button.style.backgroundColor = "#94a3b8";
+    }
 
     button.title =
-      item.name + " · 위험도 " +
-      item.riskScore + "점";
+      item.name + " · " +
+      riskTools.getRiskLabel(
+        item.riskScore,
+        riskReference
+      );
 
-    button.setAttribute(
-      "aria-label",
-      button.title
-    );
+    button.setAttribute("aria-label", button.title);
 
     const overlay = new kakao.maps.CustomOverlay({
-      position: position,
+      position,
       content: button,
       yAnchor: 0.5,
       zIndex: 3
     });
 
-    button.addEventListener("click", function() {
-
+    button.addEventListener("click", () => {
       showAccidentDetail(item);
-
-      // 패널은 지도 위에 열리므로
-      // 지도 크기를 다시 계산할 필요가 없음
       map.panTo(position);
     });
 
     overlay.setMap(map);
     mapMarkers.push(overlay);
-
     positions.push(position);
     bounds.extend(position);
   });
 
   if (positions.length === 1) {
-
     map.setCenter(positions[0]);
     map.setLevel(5);
-
   } else if (positions.length > 1) {
-
-    map.setBounds(bounds, 50, 50, 75, 50);
-
+    map.setBounds(bounds, 50, 50, 70, 50);
   } else {
-
     map.setCenter(
       new kakao.maps.LatLng(
         CENTER.latitude,
         CENTER.longitude
       )
     );
-
     map.setLevel(9);
   }
 
@@ -566,61 +384,57 @@ function displayMarkers(district) {
       ].text;
 
   setText(
-    "currentRegion",
-    "현재 표시: " + name + " · 2021~2023년"
+    "spotCount",
+    formatNumber(items.length)
   );
-
-  setText("spotCount", formatNumber(items.length));
 
   setText(
     "accidentCount",
     formatNumber(
-      items.reduce(function(sum, item) {
-        return sum + item.accidentCount;
-      }, 0)
+      items.reduce(
+        (sum, item) => sum + item.accidentCount,
+        0
+      )
     )
   );
 
   setText(
     "casualtyCount",
     formatNumber(
-      items.reduce(function(sum, item) {
-        return sum + item.casualtyCount;
-      }, 0)
+      items.reduce(
+        (sum, item) => sum + item.casualtyCount,
+        0
+      )
     )
   );
 
-  const failures = failedRequests.filter(
-    function(job) {
-      return district === "all" ||
-        job.district === district;
-    }
+  setText(
+    "currentRegion",
+    `${name} · 2021~2023년`
+  );
+
+  const missing = failedRequests.filter(
+    job => district === "all" ||
+      job.district === district
   );
 
   let message =
-    name + " · 사고다발지역 " +
-    positions.length + "곳 표시";
+    `${name} · 사고다발지역 ${positions.length}곳`;
 
-  if (!positions.length) {
-    message =
-      name + "에서 조회된 사고다발지역이 없어.";
+  if (missing.length > 0) {
+    message +=
+      ` · 요청 ${missing.length}건 실패`;
   }
 
-  if (failures.length) {
+  if (!riskReference) {
     message +=
-      " · " + failures.length +
-      "개 요청 실패로 일부 누락 가능";
+      " · 서울 전체 위험도 기준 미확정";
   }
 
   statusBox.textContent = message;
 }
 
-// =====================================
-// 11. 상세정보 행 만들기
-// =====================================
-
 function createDetailRow(label, value) {
-
   const row = document.createElement("div");
   row.className = "detail-row";
 
@@ -632,22 +446,14 @@ function createDetailRow(label, value) {
   right.className = "detail-value";
   right.textContent = value;
 
-  row.appendChild(left);
-  row.appendChild(right);
-
+  row.append(left, right);
   return row;
 }
 
-// =====================================
-// 12. 연도별 표
-// =====================================
-
 function createYearTable(item) {
-
   const heading = document.createElement("h4");
   heading.className = "year-heading";
   heading.textContent = "연도별 사고 현황";
-
   detailContent.appendChild(heading);
 
   const table = document.createElement("table");
@@ -657,8 +463,7 @@ function createYearTable(item) {
   const headerRow = document.createElement("tr");
 
   ["연도", "사고 건수", "사상자 수"].forEach(
-    function(label) {
-
+    label => {
       const th = document.createElement("th");
       th.textContent = label;
       headerRow.appendChild(th);
@@ -670,15 +475,12 @@ function createYearTable(item) {
 
   const tbody = document.createElement("tbody");
 
-  YEARS.forEach(function(year) {
-
+  riskTools.RISK_YEARS.forEach(year => {
     const record = item.records[year];
 
     const failed = failedRequests.some(
-      function(job) {
-        return job.year === year &&
-          job.district === item.districtCode;
-      }
+      job => job.year === year &&
+        job.district === item.districtCode
     );
 
     const values = failed
@@ -693,8 +495,7 @@ function createYearTable(item) {
 
     const tr = document.createElement("tr");
 
-    values.forEach(function(value) {
-
+    values.forEach(value => {
       const td = document.createElement("td");
       td.textContent = value;
       tr.appendChild(td);
@@ -706,69 +507,51 @@ function createYearTable(item) {
   table.appendChild(tbody);
 
   const tfoot = document.createElement("tfoot");
-  const total = document.createElement("tr");
+  const totalRow = document.createElement("tr");
 
   [
     "확인 합계",
     formatNumber(item.accidentCount) + "건",
     formatNumber(item.casualtyCount) + "명"
-  ].forEach(function(value) {
-
+  ].forEach(value => {
     const td = document.createElement("td");
     td.textContent = value;
-    total.appendChild(td);
+    totalRow.appendChild(td);
   });
 
-  tfoot.appendChild(total);
+  tfoot.appendChild(totalRow);
   table.appendChild(tfoot);
-
   detailContent.appendChild(table);
 
   const note = document.createElement("p");
   note.className = "year-note";
   note.textContent =
-    "기록 없음은 실제 사고 0건이 아니라 " +
-    "해당 연도에 사고다발지역으로 " +
-    "조회되지 않았다는 의미야.";
-
+    "기록 없음은 실제 사고 0건을 의미하지 않아.";
   detailContent.appendChild(note);
 }
 
-// =====================================
-// 13. 사고 상세정보 열기
-// =====================================
-
 function showAccidentDetail(item) {
-
-  if (!detailContent) return;
-
   detailContent.replaceChildren();
 
   const name = document.createElement("h3");
   name.className = "region-name";
   name.textContent = item.name;
-
   detailContent.appendChild(name);
 
   const fields = [
-    ["확인된 사고 건수", item.accidentCount, "건"],
-    ["확인된 사상자 수", item.casualtyCount, "명"],
+    ["사고 건수", item.accidentCount, "건"],
+    ["사상자 수", item.casualtyCount, "명"],
     ["사망자 수", item.deathCount, "명"],
     ["중상자 수", item.seriousCount, "명"],
     ["경상자 수", item.minorCount, "명"],
-    [
-      "부상신고자 수",
-      item.reportedInjuryCount,
-      "명"
-    ]
+    ["부상신고자", item.reportedInjuryCount, "명"]
   ];
 
-  fields.forEach(function(field) {
-
+  fields.forEach(([label, value, unit]) => {
     detailContent.appendChild(
       createDetailRow(
-        field[0],
-        formatNumber(field[1]) + field[2]
+        label,
+        formatNumber(value) + unit
       )
     );
   });
@@ -778,87 +561,74 @@ function showAccidentDetail(item) {
   const scoreBox = document.createElement("div");
   scoreBox.className = "score-box";
 
-  const title = document.createElement("div");
-  title.textContent = "위험도 점수 합계";
+  const scoreLabel = document.createElement("div");
+  scoreLabel.textContent =
+    riskTools.getRiskLabel(
+      item.riskScore,
+      riskReference
+    ) + " · 상대적 위험도";
 
   const score = document.createElement("strong");
   score.className = "score-number";
-  score.textContent = item.riskScore + "점";
+  score.textContent =
+    formatNumber(item.riskScore) + "점";
 
-  scoreBox.appendChild(title);
-  scoreBox.appendChild(score);
-
+  scoreBox.append(scoreLabel, score);
   detailContent.appendChild(scoreBox);
 
-  const caption = document.createElement("p");
-  caption.className = "score-caption";
-  caption.textContent =
-    "프로젝트 자체 분석 점수 · 공식 위험등급 아님";
-
-  detailContent.appendChild(caption);
+  const note = document.createElement("p");
+  note.className = "score-caption";
+  note.textContent =
+    "서울 전체 사고다발지역 비교 기준 · " +
+    "공식 위험등급 아님";
+  detailContent.appendChild(note);
 
   detailPanel.scrollTop = 0;
   mapLayout.classList.add("active");
 }
 
-// =====================================
-// 14. 상세정보 닫기
-// =====================================
-
 function closeDetailPanel() {
-
-  if (mapLayout) {
-    mapLayout.classList.remove("active");
-  }
-
-  if (detailContent) {
-    detailContent.replaceChildren();
-  }
+  mapLayout.classList.remove("active");
+  detailContent.replaceChildren();
 }
 
-// =====================================
-// 15. 지역 선택 필터
-// =====================================
-
 function applyFilter() {
-
   if (loading || !map) return;
-
   displayMarkers(districtSelect.value);
 }
 
 function resetFilter() {
-
   if (loading || !map) return;
-
   districtSelect.value = "all";
   displayMarkers("all");
 }
 
-// =====================================
-// 16. 페이지 시작
-// =====================================
-
-window.addEventListener("load", async function() {
-
-  if (!mapElement || !districtSelect) return;
-
+window.addEventListener("load", async () => {
   if (!window.kakao || !kakao.maps) {
     statusBox.textContent =
-      "카카오맵 연결 실패. " +
-      "JavaScript 키와 등록 도메인을 확인해 줘.";
+      "카카오맵 SDK를 확인해 줘.";
+    return;
+  }
+
+  try {
+    riskTools = await import("./risk.js");
+  } catch (error) {
+    statusBox.textContent =
+      "js/risk.js 파일을 불러오지 못했어.";
+    console.error(error);
     return;
   }
 
   map = new kakao.maps.Map(mapElement, {
-
     center: new kakao.maps.LatLng(
       CENTER.latitude,
       CENTER.longitude
     ),
-
     level: 9
   });
+
+  riskReference = riskTools.readRiskReference();
+  updateLegend();
 
   const success = await loadAllAccidents();
 
