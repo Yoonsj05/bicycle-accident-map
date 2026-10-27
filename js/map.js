@@ -25,7 +25,7 @@
 
 // 기존에 사용하던 GAS /exec 주소로 교체
 const GAS_URL =
-  "여기에_GAS_웹앱_URL_붙여넣기";
+  "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
 
 const MAP_CENTER = {
   lat: 37.5665,
