@@ -8,41 +8,37 @@
 
   <title>자전거 사고 위험지역 분석기</title>
 
-  <!-- 외부 CSS 연결 -->
+  <!-- 외부 CSS -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
+  <!-- 상단 -->
   <header>
     <h1>자전거 사고 위험지역 분석기</h1>
-    <p>공공데이터 기반 자전거 교통사고 위험지역 분석</p>
+    <p>공공데이터 기반 자전거 교통사고 위험지역 지도</p>
   </header>
 
+  <!-- 페이지 이동 메뉴 -->
   <nav>
-    <a href="index.html">메인 지도</a>
+    <a href="index.html">사고 지도</a>
+    <a href="about.html">프로젝트 소개</a>
     <a href="analysis.html">사고 분석</a>
   </nav>
 
   <main>
 
-    <section class="card">
-      <h2>프로젝트 소개</h2>
-      <p class="description">
-        공공데이터포털의 자전거 교통사고 다발지역 정보를
-        활용하여 사고 위치를 지도에 표시하고
-        위험도를 분석하는 웹앱입니다.
-      </p>
-    </section>
-
+    <!-- 지도 메인 영역 -->
     <section class="card">
 
       <h2>자전거 사고다발지역 지도</h2>
 
       <p class="description">
-        처음에는 서울 전체 사고다발지역을 표시합니다.
-        원하는 지역을 선택하면 해당 지역의 마커만
-        표시하고 지도도 자동으로 이동합니다.
+        서울 지역의 자전거 사고다발지역을
+        지도에서 확인할 수 있어요.
+        원하는 자치구를 선택하면
+        해당 지역의 사고 위치를 확인할 수 있습니다.
       </p>
 
       <!-- 지역 필터 -->
@@ -50,6 +46,7 @@
 
         <div class="search-field">
           <label for="year">조회 연도</label>
+
           <select id="year">
             <option value="2023">2023년</option>
             <option value="2022">2022년</option>
@@ -106,17 +103,19 @@
 
       </div>
 
+      <!-- 조회 상태 -->
       <p id="currentRegion" class="description">
         현재 표시: 2023년 서울 전체
       </p>
 
-      <!-- 지도 및 사고 정보 -->
+      <!-- 지도와 상세정보 -->
       <div id="mapLayout" class="map-layout">
 
-        <!-- 마커를 클릭할 때만 표시 -->
+        <!-- 마커 클릭 시 나타나는 정보창 -->
         <aside id="detailPanel" class="detail-panel">
 
           <div class="panel-header">
+
             <h3 class="panel-title">
               사고지역 상세정보
             </h3>
@@ -127,6 +126,7 @@
               aria-label="상세정보 닫기">
               &times;
             </button>
+
           </div>
 
           <div id="detailContent"></div>
@@ -141,6 +141,7 @@
 
       </div>
 
+      <!-- 데이터 조회 안내 -->
       <div id="status" class="status" role="status">
         서울 전체 사고 데이터를 준비하고 있어요.
       </div>
@@ -153,23 +154,6 @@
 
     </section>
 
-    <section class="card">
-      <h2>위험도 분석 안내</h2>
-
-      <p class="description">
-        사고 건수 × 3,
-        사망자 수 × 10,
-        중상자 수 × 5,
-        경상자 수 × 2,
-        부상신고자 수 × 1로 점수를 계산합니다.
-      </p>
-
-      <p class="description">
-        이 점수는 과제용 자체 분석 지표이며
-        공식 위험등급이나 실제 사고 발생 확률은 아닙니다.
-      </p>
-    </section>
-
   </main>
 
   <footer>
@@ -178,10 +162,10 @@
     모바일프로그래밍 중간고사 프로젝트
   </footer>
 
-  <!-- 1. 카카오맵 JavaScript SDK 먼저 불러오기 -->
+  <!-- 수정 필요: 카카오 JavaScript 키 -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
 
-  <!-- 2. 외부 지도 JavaScript 실행 -->
+  <!-- 지도 기능 JavaScript -->
   <script src="js/map.js"></script>
 
 </body>
