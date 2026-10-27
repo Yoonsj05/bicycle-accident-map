@@ -21,3 +21,53 @@ body {
     padding-right: 65px;
   }
 }
+
+
+/* =========================================
+   상단 탭 및 BIKE SAFE 로고 모양 수정
+   ========================================= */
+
+/* 1. 메뉴 탭: 기울어진 모양 제거 */
+.browser-tab::before {
+  transform: none;
+  border-radius: 17px 17px 0 0;
+  left: 4px;
+  right: 4px;
+}
+
+/* 메뉴 탭은 기존 위치 그대로 유지 */
+.browser-tab {
+  margin-right: 0;
+}
+
+/* 2. BIKE SAFE 로고: 기존 크기와 위치 유지 */
+.browser-brand {
+  position: relative;
+  isolation: isolate;
+  border-radius: 0 18px 0 0;
+  background: transparent;
+}
+
+/* 로고 배경의 왼쪽만 비스듬하게 */
+.browser-brand::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  background: #f8fbff;
+  border-radius: 17px 18px 0 0;
+
+  transform: skewX(-15deg);
+  transform-origin: bottom right;
+}
+
+/* 로고 아이콘과 글자는 기울어지지 않음 */
+.brand-logo {
+  position: relative;
+  z-index: 1;
+}
