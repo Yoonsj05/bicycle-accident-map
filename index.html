@@ -23,8 +23,8 @@
     header {
       background: #173b63;
       color: white;
-      padding: 30px 16px;
       text-align: center;
+      padding: 30px 16px;
     }
 
     header h1 {
@@ -39,8 +39,8 @@
 
     nav {
       background: white;
-      padding: 17px;
       text-align: center;
+      padding: 17px;
       border-bottom: 1px solid #ddd;
     }
 
@@ -70,8 +70,8 @@
     }
 
     h2 {
-      margin-top: 0;
       font-size: 20px;
+      margin-top: 0;
     }
 
     .description {
@@ -80,43 +80,84 @@
       line-height: 1.7;
     }
 
-    /* 왼쪽 정보, 오른쪽 지도 */
+    /* 지도는 처음에 전체 너비 */
 
     .map-layout {
       display: grid;
-      grid-template-columns: 310px minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       gap: 16px;
       margin-top: 20px;
       align-items: stretch;
     }
 
+    /* 정보창이 열리면 왼쪽 패널 생성 */
+
+    .map-layout.active {
+      grid-template-columns: 310px minmax(0, 1fr);
+    }
+
+    #map {
+      width: 100%;
+      height: 480px;
+      min-width: 0;
+      background: #e5e7eb;
+      border-radius: 12px;
+    }
+
+    /* 상세정보 패널 */
+
     .detail-panel {
+      display: none;
+      position: relative;
+      background: #f8fafc;
       border: 1px solid #dce5f0;
       border-radius: 12px;
-      background: #f8fafc;
       padding: 18px;
       min-width: 0;
       min-height: 480px;
     }
 
+    .map-layout.active .detail-panel {
+      display: block;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
     .panel-title {
-      margin: 0 0 18px;
+      margin: 0;
       font-size: 17px;
+      line-height: 1.5;
       color: #173b63;
     }
 
-    .empty-message {
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.8;
+    .close-button {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 7px;
+      background: #e8eef6;
+      color: #173b63;
+      font-size: 21px;
+      cursor: pointer;
+    }
+
+    .close-button:hover {
+      background: #d5e3f3;
     }
 
     .region-name {
-      color: #173b63;
-      font-size: 16px;
       font-weight: bold;
+      font-size: 16px;
       line-height: 1.7;
-      margin-bottom: 18px;
+      color: #173b63;
+      margin-bottom: 20px;
       word-break: keep-all;
       overflow-wrap: anywhere;
     }
@@ -125,7 +166,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       padding: 13px 0;
       border-bottom: 1px solid #e2e8f0;
       font-size: 14px;
@@ -142,40 +183,38 @@
     }
 
     .score-box {
-      margin-top: 22px;
-      padding: 18px 10px;
       background: #fff1f2;
+      padding: 18px;
+      margin-top: 24px;
       border-radius: 10px;
       text-align: center;
     }
 
-    .score-box strong {
+    .score-title {
+      color: #243247;
+      font-size: 14px;
+    }
+
+    .score-number {
       display: block;
-      font-size: 23px;
+      font-size: 25px;
+      font-weight: bold;
       color: #dc2626;
-      margin-top: 6px;
+      margin-top: 8px;
     }
 
     .score-caption {
-      margin-top: 12px;
-      font-size: 12px;
       color: #64748b;
+      font-size: 12px;
       line-height: 1.6;
-    }
-
-    #map {
-      width: 100%;
-      height: 480px;
-      min-width: 0;
-      border-radius: 12px;
-      background: #e5e7eb;
+      margin-top: 16px;
     }
 
     .status {
-      padding: 15px;
       background: #eef4fb;
-      border-radius: 10px;
+      padding: 15px;
       margin-top: 16px;
+      border-radius: 10px;
       font-size: 14px;
       line-height: 1.7;
     }
@@ -190,17 +229,13 @@
     .button {
       display: inline-block;
       padding: 13px 20px;
-      border: none;
-      border-radius: 8px;
       background: #173b63;
       color: white;
       text-decoration: none;
+      border: none;
+      border-radius: 8px;
       font-size: 14px;
       cursor: pointer;
-    }
-
-    .button:hover {
-      background: #275b91;
     }
 
     .button-outline {
@@ -214,14 +249,14 @@
     }
 
     footer {
-      padding: 25px;
       text-align: center;
+      padding: 25px;
       color: #64748b;
       font-size: 13px;
       line-height: 1.8;
     }
 
-    /* 모바일 화면 */
+    /* 모바일에서는 위아래 배치 */
 
     @media (max-width: 760px) {
       header h1 {
@@ -232,8 +267,8 @@
         padding: 16px;
       }
 
-      .map-layout {
-        grid-template-columns: 1fr;
+      .map-layout.active {
+        grid-template-columns: minmax(0, 1fr);
       }
 
       .detail-panel {
@@ -266,13 +301,15 @@
   <main>
 
     <section class="card">
+
       <h2>프로젝트 소개</h2>
 
       <p class="description">
-        공공데이터포털에서 제공하는 자전거 교통사고
+        공공데이터포털의 자전거 교통사고
         다발지역 정보를 활용하여 사고 위험지역을
         지도에 표시하고 위험도를 분석하는 웹앱입니다.
       </p>
+
     </section>
 
     <section class="card">
@@ -284,30 +321,36 @@
       </p>
 
       <p class="description">
-        지도에서 사고다발지역 마커를 클릭하면
-        왼쪽에 사고 정보가 표시되고,
-        선택한 마커가 오른쪽 지도 중앙으로 이동합니다.
+        지도에서 사고지역 마커를 클릭하면
+        왼쪽에 상세정보창이 나타납니다.
+        닫기 버튼을 누르면 지도가 다시 넓어집니다.
       </p>
 
-      <div class="map-layout">
+      <div id="mapLayout" class="map-layout">
 
-        <!-- 왼쪽 사고 정보 -->
-        <aside class="detail-panel">
+        <!-- 처음에는 숨겨진 상세정보창 -->
+        <aside id="detailPanel"
+               class="detail-panel">
 
-          <h3 class="panel-title">
-            사고지역 상세정보
-          </h3>
+          <div class="panel-header">
 
-          <div id="detailContent">
-            <p class="empty-message">
-              지도에서 파란색 마커를 클릭하면
-              이곳에 사고 정보가 표시됩니다.
-            </p>
+            <h3 class="panel-title">
+              사고지역 상세정보
+            </h3>
+
+            <button class="close-button"
+                    onclick="closeDetailPanel()"
+                    aria-label="상세정보 닫기">
+              &times;
+            </button>
+
           </div>
+
+          <div id="detailContent"></div>
 
         </aside>
 
-        <!-- 오른쪽 카카오맵 -->
+        <!-- 처음에는 전체 너비인 지도 -->
         <div id="map"
              aria-label="자전거 사고다발지역 지도">
         </div>
@@ -317,7 +360,7 @@
       <div id="status"
            class="status"
            role="status">
-        사고 데이터를 준비하고 있어요.
+        사고 데이터를 불러오고 있어요.
       </div>
 
       <div class="actions">
@@ -341,8 +384,8 @@
       <h2>위험도 분석 안내</h2>
 
       <p class="description">
-        사고 건수와 인명피해 정보를 활용해
-        자체 위험도 점수를 계산합니다.
+        위험도 점수는 사고 건수와 인명피해를
+        바탕으로 계산한 과제용 자체 지표입니다.
       </p>
 
       <p class="description">
@@ -354,9 +397,8 @@
       </p>
 
       <p class="description">
-        위험도 점수는 공식 위험등급이나
-        실제 사고 발생 확률이 아닌
-        과제용 자체 분석 지표입니다.
+        공식 위험등급이나 실제 사고 발생 확률을
+        의미하지 않습니다.
       </p>
 
     </section>
@@ -374,21 +416,22 @@
 
   <script>
 
-    // ==================================
-    // 수정 2: GAS 웹 앱 주소
-    // ==================================
+    // ===================================
+    // 수정 2: GAS 웹 앱 URL
+    // ===================================
 
     const GAS_URL =
       "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
 
-    // ==================================
+    // ===================================
     // 기본 변수
-    // ==================================
+    // ===================================
 
     let map = null;
     let markers = [];
     let requestNumber = 0;
     let loading = false;
+    let selectedPosition = null;
 
     const statusBox =
       document.getElementById("status");
@@ -396,12 +439,15 @@
     const detailContent =
       document.getElementById("detailContent");
 
+    const mapLayout =
+      document.getElementById("mapLayout");
+
     const reloadButton =
       document.getElementById("reloadButton");
 
-    // ==================================
-    // JSONP 데이터 요청
-    // ==================================
+    // ===================================
+    // JSONP 요청
+    // ===================================
 
     function requestJSONP(url) {
 
@@ -418,9 +464,7 @@
         let finished = false;
 
         const timer = setTimeout(function() {
-          finish(new Error(
-            "데이터 요청 시간이 초과됐어요."
-          ));
+          finish(new Error("데이터 요청 시간 초과"));
         }, 20000);
 
         function cleanup() {
@@ -448,9 +492,7 @@
         };
 
         script.onerror = function() {
-          finish(new Error(
-            "GAS 서버 연결에 실패했어요."
-          ));
+          finish(new Error("GAS 연결에 실패했어요."));
         };
 
         const separator =
@@ -466,9 +508,9 @@
       });
     }
 
-    // ==================================
+    // ===================================
     // 지도 생성
-    // ==================================
+    // ===================================
 
     function initMap() {
 
@@ -480,33 +522,26 @@
         return;
       }
 
-      const container =
-        document.getElementById("map");
-
-      map = new kakao.maps.Map(container, {
-        center: new kakao.maps.LatLng(
-          37.4964,
-          127.0533
-        ),
-        level: 5
-      });
+      map = new kakao.maps.Map(
+        document.getElementById("map"),
+        {
+          center: new kakao.maps.LatLng(
+            37.4964, 127.0533
+          ),
+          level: 5
+        }
+      );
 
       loadAccidentMarkers();
     }
 
-    // ==================================
+    // ===================================
     // 사고 데이터 불러오기
-    // ==================================
+    // ===================================
 
     async function loadAccidentMarkers() {
 
-      if (!map) {
-        statusBox.textContent =
-          "지도가 아직 준비되지 않았어요.";
-        return;
-      }
-
-      if (loading) return;
+      if (!map || loading) return;
 
       if (
         !GAS_URL.startsWith(
@@ -523,22 +558,19 @@
       reloadButton.disabled = true;
 
       statusBox.textContent =
-        "2023년 서울 강남구 사고 데이터를 가져오는 중...";
+        "2023년 서울 강남구 데이터를 불러오는 중...";
 
       try {
 
-        const query =
-          "?year=2023&sido=11&gugun=680";
-
         const data = await requestJSONP(
-          GAS_URL + query
+          GAS_URL + "?year=2023&sido=11&gugun=680"
         );
 
         if (!data || !data.success) {
           throw new Error(
             data && data.error
               ? data.error
-              : "API 응답을 확인해 주세요."
+              : "API 응답 오류"
           );
         }
 
@@ -547,25 +579,20 @@
             ? data.accidents
             : [];
 
-        // 정상적인 응답을 받은 후 기존 마커 삭제
+        // 기존 마커 제거
         markers.forEach(function(marker) {
           marker.setMap(null);
         });
 
         markers = [];
-        detailContent.replaceChildren();
 
-        const empty = document.createElement("p");
-        empty.className = "empty-message";
-        empty.textContent =
-          "지도에서 마커를 클릭하면 사고 정보가 표시됩니다.";
-
-        detailContent.appendChild(empty);
-
-        let validCount = 0;
+        // 기존 정보창 닫기
+        closeDetailPanel();
 
         const bounds =
           new kakao.maps.LatLngBounds();
+
+        let validCount = 0;
 
         accidents.forEach(function(item) {
 
@@ -595,8 +622,7 @@
 
           const position =
             new kakao.maps.LatLng(
-              latitude,
-              longitude
+              latitude, longitude
             );
 
           const marker =
@@ -610,7 +636,6 @@
           bounds.extend(position);
           validCount++;
 
-          // 마커 클릭 시 왼쪽 정보 표시
           kakao.maps.event.addListener(
             marker,
             "click",
@@ -623,7 +648,6 @@
 
         if (validCount === 1) {
 
-          // 마커가 하나면 처음부터 지도 중앙
           map.setCenter(
             markers[0].getPosition()
           );
@@ -632,19 +656,18 @@
 
         } else if (validCount > 1) {
 
-          // 마커가 여러 개면 전체 위치가 보이게
-          map.setBounds(bounds, 40, 40, 40, 40);
-
+          map.setBounds(
+            bounds, 40, 40, 40, 40
+          );
         }
 
         statusBox.textContent =
           "사고다발지역 " +
           accidents.length +
-          "곳 조회 완료! " +
-          "지도에 " +
+          "곳 조회 완료! 마커 " +
           validCount +
-          "개의 마커가 표시됐어요. " +
-          "마커를 클릭하면 왼쪽에 상세정보가 나타나요.";
+          "개가 표시됐어요. " +
+          "마커를 클릭하면 상세정보가 열려요.";
 
       } catch (error) {
 
@@ -661,9 +684,9 @@
       }
     }
 
-    // ==================================
-    // 정보 행 생성
-    // ==================================
+    // ===================================
+    // 사고 정보 행 만들기
+    // ===================================
 
     function createDetailRow(label, value) {
 
@@ -690,26 +713,28 @@
       return row;
     }
 
-    // ==================================
-    // 마커 선택 시 동작
-    // ==================================
+    // ===================================
+    // 마커 클릭 시 상세정보 열기
+    // ===================================
 
     function selectAccident(marker, item) {
 
-      // 왼쪽 정보 초기화
+      // 선택된 마커 좌표 저장
+      selectedPosition = marker.getPosition();
+
+      // 기존 상세정보 삭제
       detailContent.replaceChildren();
 
-      // 지역 이름
       const regionName =
         document.createElement("div");
 
       regionName.className = "region-name";
+
       regionName.textContent =
         item.name || "사고다발지역";
 
       detailContent.appendChild(regionName);
 
-      // 상세 사고 정보
       detailContent.appendChild(
         createDetailRow(
           "사고 건수",
@@ -745,62 +770,104 @@
         )
       );
 
-      // 위험도 점수
+      detailContent.appendChild(
+        createDetailRow(
+          "부상신고자 수",
+          item.reportedInjuryCount + "명"
+        )
+      );
+
       const scoreBox =
         document.createElement("div");
 
       scoreBox.className = "score-box";
 
-      const scoreLabel =
-        document.createElement("span");
+      const scoreTitle =
+        document.createElement("div");
 
-      scoreLabel.textContent =
-        "자체 분석 위험도";
+      scoreTitle.className = "score-title";
+      scoreTitle.textContent = "자체 분석 위험도";
 
-      const scoreValue =
+      const scoreNumber =
         document.createElement("strong");
 
-      scoreValue.textContent =
+      scoreNumber.className = "score-number";
+      scoreNumber.textContent =
         item.riskScore + "점";
 
-      scoreBox.appendChild(scoreLabel);
-      scoreBox.appendChild(scoreValue);
+      scoreBox.appendChild(scoreTitle);
+      scoreBox.appendChild(scoreNumber);
 
       detailContent.appendChild(scoreBox);
 
-      const scoreCaption =
+      const note =
         document.createElement("p");
 
-      scoreCaption.className = "score-caption";
+      note.className = "score-caption";
 
-      scoreCaption.textContent =
+      note.textContent =
         "사고 건수와 인명피해를 활용한 " +
         "과제용 자체 위험도 점수입니다.";
 
-      detailContent.appendChild(scoreCaption);
+      detailContent.appendChild(note);
 
-      // 선택한 마커가 오른쪽 지도 중앙에 오도록 이동
-      map.setCenter(
-        marker.getPosition()
-      );
+      // 왼쪽 패널 표시
+      mapLayout.classList.add("active");
 
-      // 너무 축소되어 있으면 확대
-      if (map.getLevel() > 5) {
-        map.setLevel(5);
-      }
+      // 지도 크기 변경을 반영한 뒤
+      // 선택한 마커를 오른쪽 지도 중앙에 배치
+      requestAnimationFrame(function() {
+
+        map.relayout();
+
+        if (map.getLevel() > 5) {
+          map.setLevel(5);
+        }
+
+        map.setCenter(selectedPosition);
+      });
 
       statusBox.textContent =
         "선택한 사고지역: " +
         item.name +
         " / 위험도 " +
-        item.riskScore +
-        "점";
-
+        item.riskScore + "점";
     }
 
-    // ==================================
+    // ===================================
+    // 상세정보 닫기
+    // ===================================
+
+    function closeDetailPanel() {
+
+      // 왼쪽 패널 숨기기
+      mapLayout.classList.remove("active");
+
+      detailContent.replaceChildren();
+
+      // 지도 크기 다시 확장
+      if (map) {
+
+        const center =
+          selectedPosition || map.getCenter();
+
+        requestAnimationFrame(function() {
+
+          map.relayout();
+          map.setCenter(center);
+        });
+      }
+
+      selectedPosition = null;
+
+      statusBox.textContent =
+        "상세정보창을 닫았어요. " +
+        "다른 사고지역 마커를 클릭해 주세요.";
+    }
+
+    // ===================================
     // 페이지 시작
-    // ==================================
+    // ===================================
 
     window.addEventListener(
       "load",
