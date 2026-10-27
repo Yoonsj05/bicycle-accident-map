@@ -8,19 +8,75 @@
 
   <title>자전거 사고 위험지역 분석기</title>
 
-  <!-- 외부 CSS -->
   <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    /* 연도별 상세정보 표 추가 스타일 */
+    .year-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 12px;
+    }
+
+    .year-table th,
+    .year-table td {
+      padding: 11px 5px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: center;
+    }
+
+    .year-table th {
+      background: #e8eef6;
+      color: #173b63;
+    }
+
+    .year-table td:first-child {
+      font-weight: bold;
+    }
+
+    .year-table tfoot {
+      background: #f1f5f9;
+      font-weight: bold;
+    }
+
+    .year-heading {
+      margin: 20px 0 8px;
+      font-size: 15px;
+      color: #173b63;
+    }
+
+    .year-note {
+      margin-top: 12px;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #64748b;
+    }
+
+    .loading-note {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    #map {
+      height: 540px;
+    }
+
+    @media (max-width: 760px) {
+      #map {
+        height: 400px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-  <!-- 상단 -->
   <header>
     <h1>자전거 사고 위험지역 분석기</h1>
-    <p>공공데이터 기반 자전거 교통사고 위험지역 지도</p>
+    <p>공공데이터 기반 자전거 사고다발지역 지도</p>
   </header>
 
-  <!-- 페이지 이동 메뉴 -->
   <nav>
     <a href="index.html">사고 지도</a>
     <a href="about.html">프로젝트 소개</a>
@@ -28,34 +84,21 @@
   </nav>
 
   <main>
-
-    <!-- 지도 메인 영역 -->
     <section class="card">
 
       <h2>자전거 사고다발지역 지도</h2>
 
       <p class="description">
-        서울 지역의 자전거 사고다발지역을
-        지도에서 확인할 수 있어요.
-        원하는 자치구를 선택하면
-        해당 지역의 사고 위치를 확인할 수 있습니다.
+        2021년부터 2023년까지의 자전거 사고다발지역을
+        통합해서 보여줍니다.
+        마커를 클릭하면 연도별 사고 현황을
+        확인할 수 있습니다.
       </p>
 
-      <!-- 지역 필터 -->
       <div class="search-box">
 
         <div class="search-field">
-          <label for="year">조회 연도</label>
-
-          <select id="year">
-            <option value="2023">2023년</option>
-            <option value="2022">2022년</option>
-            <option value="2021">2021년</option>
-          </select>
-        </div>
-
-        <div class="search-field">
-          <label for="district">서울 자치구</label>
+          <label for="district">지역 선택</label>
 
           <select id="district">
             <option value="all">서울 전체</option>
@@ -103,19 +146,15 @@
 
       </div>
 
-      <!-- 조회 상태 -->
       <p id="currentRegion" class="description">
-        현재 표시: 2023년 서울 전체
+        현재 표시: 서울 전체 · 2021~2023년
       </p>
 
-      <!-- 지도와 상세정보 -->
       <div id="mapLayout" class="map-layout">
 
-        <!-- 마커 클릭 시 나타나는 정보창 -->
         <aside id="detailPanel" class="detail-panel">
 
           <div class="panel-header">
-
             <h3 class="panel-title">
               사고지역 상세정보
             </h3>
@@ -126,14 +165,11 @@
               aria-label="상세정보 닫기">
               &times;
             </button>
-
           </div>
 
           <div id="detailContent"></div>
-
         </aside>
 
-        <!-- 카카오맵 -->
         <div
           id="map"
           aria-label="자전거 사고다발지역 지도">
@@ -141,9 +177,8 @@
 
       </div>
 
-      <!-- 데이터 조회 안내 -->
       <div id="status" class="status" role="status">
-        서울 전체 사고 데이터를 준비하고 있어요.
+        서울 전체 사고지역을 불러오고 있어요.
       </div>
 
       <div class="actions">
@@ -153,7 +188,6 @@
       </div>
 
     </section>
-
   </main>
 
   <footer>
@@ -162,10 +196,9 @@
     모바일프로그래밍 중간고사 프로젝트
   </footer>
 
-  <!-- 수정 필요: 카카오 JavaScript 키 -->
+  <!-- 본인의 카카오 JavaScript 키로 수정 -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
 
-  <!-- 지도 기능 JavaScript -->
   <script src="js/map.js"></script>
 
 </body>
