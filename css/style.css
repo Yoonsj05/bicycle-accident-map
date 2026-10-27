@@ -1,16 +1,713 @@
 
-/* ========================================
-   BIKE SAFE 상세정보 개선
-   위험도 카드 색상 및 복귀 버튼
-   ======================================== */
+/* ==================================================
+   BIKE SAFE
+   서울 자전거 교통사고 위험지역 분석기
 
-/* 사고 상세정보에서 서울 전체 현황으로 복귀 */
+   파일: css/style.css
+
+   구성
+   1. 기본 설정
+   2. 브라우저 외곽 및 상단 탭
+   3. BIKE SAFE 로고
+   4. 지도 레이아웃
+   5. 왼쪽 상세정보 패널
+   6. 서울 전체 자전거 사고 현황
+   7. 사고지역 상세정보
+   8. 위험도별 상세 카드
+   9. 지역 선택 및 조회 상태
+   10. 위험도 범례 및 지도 마커
+   11. 공통 UI 및 하단
+   12. 화면 크기 조정
+   ================================================== */
+
+
+/* ==================================================
+   1. 기본 설정
+   ================================================== */
+
+:root {
+  --navy: #193e65;
+  --navy-light: #365670;
+  --blue: #2463a0;
+
+  --text: #193b61;
+  --muted: #637b94;
+  --border: #d6e4f1;
+
+  --yellow: #ffc84d;
+  --orange: #ff963c;
+  --red: #ff5757;
+
+  --panel-width: 350px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 1050px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+
+  padding: 40px 100px 48px;
+
+  background: linear-gradient(
+    135deg,
+    #e8f4fc,
+    #d3e5f2
+  );
+
+  color: var(--text);
+
+  font-family:
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    Arial,
+    sans-serif;
+
+  font-size: 14px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+
+/* ==================================================
+   2. 브라우저 외곽
+   ================================================== */
+
+.browser-shell {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  overflow: hidden;
+
+  border: 1px solid #b9cfe0;
+  border-radius: 20px;
+
+  background: white;
+
+  box-shadow:
+    0 16px 42px rgba(30, 70, 105, 0.18);
+}
+
+
+/* ==================================================
+   3. 상단 브라우저 바
+   ================================================== */
+
+.browser-bar {
+  display: flex;
+  align-items: flex-end;
+
+  width: 100%;
+  height: 75px;
+
+  padding: 0 20px;
+
+  background: linear-gradient(
+    180deg,
+    #486b86,
+    #34546f
+  );
+}
+
+
+/* 맥 스타일 창 버튼 */
+
+.window-controls {
+  display: flex;
+  align-self: center;
+  flex-shrink: 0;
+
+  gap: 9px;
+  margin-right: 26px;
+}
+
+.window-dot {
+  display: block;
+
+  width: 15px;
+  height: 15px;
+
+  border-radius: 50%;
+}
+
+.window-dot.red {
+  background: #ff615e;
+}
+
+.window-dot.yellow {
+  background: #ffbd44;
+}
+
+.window-dot.green {
+  background: #28c940;
+}
+
+
+/* ==================================================
+   4. 상단 페이지 메뉴
+   윗부분만 둥근 일반 브라우저 탭
+   ================================================== */
+
+.browser-tabs {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+
+  height: 100%;
+  gap: 5px;
+
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+}
+
+.browser-tab {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  min-width: 150px;
+  height: 51px;
+
+  margin: 0;
+  padding: 0 19px;
+
+  border: none;
+  border-radius: 17px 17px 0 0;
+
+  background: #bad0e1;
+  color: #304e68;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  transform: none;
+}
+
+/* 예전에 쓰던 기울어진 탭 효과 방지 */
+
+.browser-tab::before,
+.browser-tab::after {
+  content: none;
+  display: none;
+}
+
+.browser-tab:hover {
+  background: #dce8f2;
+}
+
+.browser-tab.active {
+  background: #ffffff;
+  color: var(--navy);
+}
+
+.tab-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+
+/* ==================================================
+   5. BIKE SAFE 로고
+   왼쪽만 비스듬한 형태
+   ================================================== */
+
+.browser-brand {
+  position: relative;
+  isolation: isolate;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  flex-shrink: 0;
+
+  width: 255px;
+
+  margin-left: auto;
+  margin-right: -20px;
+
+  padding: 0 16px 0 28px;
+
+  background: transparent;
+  color: var(--navy);
+}
+
+.browser-brand::before {
+  content: "";
+
+  position: absolute;
+  z-index: -1;
+
+  inset: 0;
+
+  background: #f8fbff;
+
+  border-radius: 17px 18px 0 0;
+
+  transform: skewX(-15deg);
+  transform-origin: bottom right;
+}
+
+.brand-logo {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+  min-width: 0;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+/* SVG가 과도하게 커지는 문제 방지 */
+
+.brand-logo svg,
+.brand-logo .bike-logo-icon {
+  display: block;
+
+  width: 45px;
+  height: 45px;
+
+  min-width: 45px;
+  max-width: 45px;
+  max-height: 45px;
+
+  flex: 0 0 45px;
+}
+
+.brand-name {
+  color: var(--navy);
+
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.1;
+
+  white-space: nowrap;
+}
+
+.brand-subtitle {
+  margin-top: 5px;
+
+  color: #54708c;
+  font-size: 9px;
+
+  white-space: nowrap;
+}
+
+
+/* ==================================================
+   6. 메인 지도 영역
+   ================================================== */
+
+.workspace {
+  position: relative;
+  min-width: 0;
+
+  background: #f8fbff;
+}
+
+.bike-map-page .map-workspace {
+  display: block;
+
+  width: 100%;
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+}
+
+.bike-map-page .map-layout {
+  position: relative;
+  display: block;
+
+  width: 100%;
+  height: 730px;
+  min-height: 730px;
+
+  margin: 0;
+  padding: 0;
+
+  overflow: hidden;
+
+  background: #e8eeeb;
+}
+
+
+/* 패널이 닫혔을 때는 지도 전체 사용 */
+
+.bike-map-page #map {
+  position: absolute;
+
+  top: 0;
+  left: 0;
+
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  min-width: 0;
+  min-height: 0;
+
+  margin: 0;
+  padding: 0;
+
+  background: #e8eeeb;
+}
+
+
+/* 패널이 열렸을 때는 지도 오른쪽에 표시 */
+
+.bike-map-page .map-layout.active #map {
+  left: var(--panel-width);
+  width: calc(100% - var(--panel-width));
+}
+
+
+/* ==================================================
+   7. 왼쪽 자전거 사고 현황 패널
+   ================================================== */
+
+.bike-map-page .detail-panel {
+  display: none;
+
+  position: absolute;
+  z-index: 30;
+
+  top: 0;
+  bottom: 0;
+  left: 0;
+
+  width: var(--panel-width);
+  height: 100%;
+
+  padding: 20px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+
+  background: #ffffff;
+
+  box-shadow:
+    4px 0 15px rgba(20, 50, 80, 0.08);
+}
+
+
+/* 기본 패널과 마커 상세 패널 모두 표시 */
+
+.bike-map-page .map-layout.active .detail-panel {
+  display: block;
+}
+
+
+/* 패널 상단 제목과 닫기 버튼 */
+
+.panel-header {
+  position: sticky;
+  z-index: 3;
+
+  top: -20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 20px;
+  padding: 10px 0 14px;
+
+  border-bottom: 1px solid #e6edf4;
+
+  background: #ffffff;
+}
+
+.panel-title {
+  margin: 0;
+
+  color: var(--navy);
+
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #edf4fa;
+  color: var(--muted);
+
+  font-size: 23px;
+}
+
+.close-button:hover {
+  background: #dceaf5;
+}
+
+.close-button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+
+/* ==================================================
+   8. 닫힌 패널 다시 열기
+   ================================================== */
+
+.open-overview-button {
+  position: absolute;
+  z-index: 25;
+
+  top: 20px;
+  left: 20px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 12px 16px;
+
+  border: 1px solid #d0dfec;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.97);
+  color: var(--navy);
+
+  font-size: 13px;
+  font-weight: 800;
+
+  box-shadow:
+    0 4px 15px rgba(25, 60, 95, 0.12);
+}
+
+.open-overview-button:hover {
+  background: #eaf4fd;
+}
+
+.open-overview-button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+
+/* ==================================================
+   9. 서울 전체 자전거 사고 현황
+   ================================================== */
+
+.overview-lead {
+  margin: 0 0 20px;
+
+  color: var(--muted);
+
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.overview-card {
+  margin-bottom: 12px;
+  padding: 17px;
+
+  border: 1px solid #e0eaf3;
+  border-radius: 12px;
+
+  background: #f5f9fe;
+}
+
+.overview-label {
+  display: block;
+
+  color: #647d95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.overview-number {
+  display: block;
+
+  margin-top: 8px;
+
+  color: var(--navy);
+
+  font-size: 29px;
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.overview-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+.overview-grid .overview-card {
+  min-width: 0;
+  padding: 14px;
+}
+
+.overview-grid .overview-number {
+  font-size: 23px;
+}
+
+.overview-section-title {
+  margin: 24px 0 12px;
+
+  color: var(--navy);
+
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+
+/* 위험도별 사고지역 수 */
+
+.overview-risk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 11px 0;
+
+  border-bottom: 1px solid #e9eff5;
+
+  color: #47657e;
+  font-size: 12px;
+}
+
+.overview-risk-row strong {
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.overview-risk-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.overview-dot {
+  display: inline-block;
+  flex-shrink: 0;
+
+  width: 11px;
+  height: 11px;
+
+  border-radius: 50%;
+}
+
+.overview-dot.low {
+  background: var(--yellow);
+}
+
+.overview-dot.medium {
+  background: var(--orange);
+}
+
+.overview-dot.high {
+  background: var(--red);
+}
+
+.overview-dot.unknown {
+  background: #94a3b8;
+}
+
+
+/* 실시간 데이터 조회 진행 상태 */
+
+.overview-progress {
+  margin-top: 18px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  line-height: 1.8;
+  white-space: pre-line;
+}
+
+.panel-loading {
+  color: var(--muted);
+
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+
+/* ==================================================
+   10. 개별 자전거 사고지역 상세정보
+   ================================================== */
+
+/* 상세정보에서 서울 전체 현황으로 복귀 */
+
 .bike-map-page .detail-back-button {
   display: flex;
   align-items: center;
   justify-content: flex-start;
 
   width: 100%;
+
   margin: 0 0 18px;
   padding: 11px 13px;
 
@@ -22,8 +719,8 @@
 
   font-size: 12px;
   font-weight: 750;
+  line-height: 1.5;
   text-align: left;
-  cursor: pointer;
 
   transition:
     background 0.2s ease,
@@ -36,49 +733,678 @@
 }
 
 .bike-map-page .detail-back-button:focus-visible {
-  outline: 2px solid #2463a0;
+  outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
 
-/* 기존 빨간 위험도 카드의 색상 재설정 */
 
-/* 주의: 노랑 */
+/* 선택한 자전거 사고지역 이름 */
+
+.region-name {
+  margin: 8px 0 17px;
+
+  color: var(--navy);
+
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+
+/* 개별 사고 건수, 사상자 등 */
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 10px;
+
+  padding: 12px 0;
+
+  border-bottom: 1px solid #e8eff6;
+}
+
+.detail-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.detail-value {
+  color: var(--navy);
+  font-weight: 750;
+  text-align: right;
+}
+
+
+/* ==================================================
+   11. 연도별 자전거 사고 통계 표
+   ================================================== */
+
+.year-heading {
+  margin: 20px 0 10px;
+
+  color: var(--navy);
+
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.year-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  font-size: 11px;
+}
+
+.year-table th,
+.year-table td {
+  padding: 12px 4px;
+
+  border-bottom: 1px solid var(--border);
+
+  text-align: center;
+}
+
+.year-table th {
+  background: #edf5fc;
+  color: var(--navy);
+  font-weight: 800;
+}
+
+.year-table td {
+  color: #47657e;
+}
+
+.year-table tfoot {
+  background: #f2f6fa;
+  font-weight: 700;
+}
+
+.year-note {
+  margin-top: 13px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+
+/* ==================================================
+   12. 위험도 점수 카드
+   주의: 노랑
+   높음: 주황
+   매우 높음: 빨강
+   ================================================== */
+
+/* 기본 점수 카드 */
+
+.bike-map-page .score-box {
+  margin-top: 19px;
+  padding: 17px;
+
+  border: 1px solid #d5dfe8;
+  border-radius: 11px;
+
+  background: #f1f5f9;
+  color: #53687d;
+
+  text-align: center;
+}
+
+
+/* 주의: 노란색 */
+
 .bike-map-page .score-box.risk-low {
   background: #fff7dc;
-  border: 1px solid #f7d87a;
+  border-color: #f7d87a;
   color: #946500;
 }
 
-/* 높음: 주황 */
+
+/* 높음: 주황색 */
+
 .bike-map-page .score-box.risk-medium {
   background: #fff0df;
-  border: 1px solid #ffc38a;
+  border-color: #ffc38a;
   color: #af570a;
 }
 
-/* 매우 높음: 빨강 */
+
+/* 매우 높음: 빨간색 */
+
 .bike-map-page .score-box.risk-high {
   background: #fff0f0;
-  border: 1px solid #ffc6ca;
+  border-color: #ffc6ca;
   color: #c33443;
 }
 
-/* 위험도 기준이 없는 경우 */
+
+/* 위험도 계산 중 또는 기준 없음 */
+
 .bike-map-page .score-box.risk-unknown {
   background: #f1f5f9;
-  border: 1px solid #d5dfe8;
+  border-color: #d5dfe8;
   color: #53687d;
 }
 
-.bike-map-page .score-risk-label {
+.score-risk-label {
   font-size: 12px;
   font-weight: 700;
   line-height: 1.6;
 }
 
-.bike-map-page .score-number {
+.score-number {
   display: block;
+
   margin-top: 8px;
+
   font-size: 29px;
   font-weight: 850;
+  line-height: 1.2;
+}
+
+.score-caption {
+  margin-top: 12px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+
+/* ==================================================
+   13. 지도 오른쪽 위 자치구 선택
+   ================================================== */
+
+.floating-filter {
+  position: absolute;
+  z-index: 20;
+
+  top: 19px;
+  right: 21px;
+
+  width: 210px;
+  padding: 13px;
+
+  border: 1px solid #d4e1ed;
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.97);
+
+  box-shadow:
+    0 5px 18px rgba(19, 53, 85, 0.14);
+}
+
+.floating-filter label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: var(--navy);
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.floating-filter select {
+  width: 100%;
+  height: 41px;
+
+  padding: 0 12px;
+
+  border: 1px solid #cfdeeb;
+  border-radius: 8px;
+
+  background: white;
+  color: var(--text);
+
+  font-size: 13px;
+
+  outline: none;
+  cursor: pointer;
+}
+
+.floating-filter select:focus {
+  border-color: #478aca;
+
+  box-shadow:
+    0 0 0 3px rgba(71, 138, 202, 0.12);
+}
+
+.filter-caption {
+  margin: 9px 0 0;
+
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+
+/* ==================================================
+   14. 지도 데이터 조회 상태
+   ================================================== */
+
+.status,
+.analysis-status {
+  padding: 10px 13px;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--navy);
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.map-status {
+  position: absolute;
+  z-index: 12;
+
+  top: 19px;
+  left: 20px;
+
+  width: fit-content;
+  max-width: 420px;
+
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.07);
+}
+
+/* 패널이 열려 있다면 상태창은 숨김 */
+
+.bike-map-page .map-layout.active .map-status {
+  display: none;
+}
+
+
+/* ==================================================
+   15. 지도 하단 위험도 범례
+   ================================================== */
+
+.risk-legend-bar {
+  position: absolute;
+  z-index: 15;
+
+  left: 20px;
+  right: 20px;
+  bottom: 17px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 20px;
+
+  min-height: 46px;
+  padding: 8px 17px;
+
+  border: 1px solid #d4e1ed;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  box-shadow:
+    0 4px 16px rgba(19, 53, 85, 0.12);
+
+  pointer-events: none;
+}
+
+
+/* 왼쪽 패널이 열렸을 때 범례 위치 이동 */
+
+.bike-map-page .map-layout.active
+.risk-legend-bar {
+  left: calc(var(--panel-width) + 20px);
+}
+
+.legend-heading {
+  display: flex;
+  flex: 0 0 115px;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.legend-heading strong {
+  color: var(--navy);
+  font-size: 12px;
+}
+
+.legend-heading span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.legend-scale {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  flex: 1;
+  min-width: 0;
+
+  gap: 7px;
+}
+
+.legend-segment {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+  min-width: 0;
+
+  color: #3b5873;
+
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.legend-line {
+  display: block;
+
+  width: 100%;
+  height: 4px;
+
+  border-radius: 20px;
+}
+
+.legend-line.low {
+  background: var(--yellow);
+}
+
+.legend-line.medium {
+  background: var(--orange);
+}
+
+.legend-line.high {
+  background: var(--red);
+}
+
+
+/* ==================================================
+   16. 카카오맵 사고지역 마커
+   ================================================== */
+
+.risk-marker {
+  display: block;
+
+  width: 19px;
+  height: 19px;
+
+  margin: 0;
+  padding: 0;
+
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.25);
+
+  cursor: pointer;
+}
+
+.risk-marker.low {
+  background: var(--yellow);
+}
+
+.risk-marker.medium {
+  background: var(--orange);
+}
+
+.risk-marker.high {
+  background: var(--red);
+}
+
+.risk-marker.unknown {
+  background: #94a3b8;
+}
+
+.risk-marker:hover {
+  transform: scale(1.2);
+}
+
+.risk-marker:focus-visible {
+  outline: 3px solid var(--navy);
+  outline-offset: 2px;
+}
+
+
+/* ==================================================
+   17. JavaScript 호환용 숨김 요소
+   ================================================== */
+
+.data-only,
+.data-only * {
+  display: none !important;
+}
+
+
+/* ==================================================
+   18. 다른 페이지 공통 UI
+   상세 디자인은 css/pages.css에서 관리
+   ================================================== */
+
+.card {
+  margin-bottom: 18px;
+  padding: 24px;
+
+  border: 1px solid var(--border);
+  border-radius: 13px;
+
+  background: white;
+}
+
+.description {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+  padding: 10px 17px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: var(--blue);
+  color: white;
+
+  font-weight: 700;
+}
+
+.button:hover {
+  background: #1d548b;
+}
+
+.button-outline {
+  border: 1px solid #bfd2e3;
+  background: white;
+  color: var(--navy);
+}
+
+.button-outline:hover {
+  background: #eaf4fd;
+}
+
+.analysis-summary {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 15px;
+}
+
+.ranking-item {
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ranking-title {
+  color: var(--navy);
+  font-weight: 750;
+}
+
+.ranking-info,
+.analysis-coverage,
+.analysis-note {
+  color: var(--muted);
+
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.bar-background {
+  height: 12px;
+
+  overflow: hidden;
+
+  border-radius: 20px;
+
+  background: #e9eff5;
+}
+
+.bar {
+  height: 100%;
+
+  border-radius: 20px;
+
+  background: linear-gradient(
+    90deg,
+    #ffa84b,
+    #ff6262
+  );
+}
+
+.info-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-tab {
+  padding: 13px 20px;
+
+  border: 0;
+  border-bottom: 3px solid transparent;
+
+  background: transparent;
+  color: var(--muted);
+
+  font-weight: 700;
+}
+
+.info-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--blue);
+}
+
+.keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.keyword-chip {
+  padding: 12px 16px;
+
+  border-radius: 9px;
+
+  background: #eaf4fd;
+  color: var(--navy);
+
+  font-weight: 700;
+}
+
+
+/* ==================================================
+   19. 하단 푸터
+   ================================================== */
+
+footer,
+.app-footer {
+  margin: 0;
+  padding: 11px 20px;
+
+  border-top: 1px solid var(--border);
+
+  background: #f6faff;
+  color: var(--muted);
+
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+
+/* ==================================================
+   20. 작은 PC 화면
+   ================================================== */
+
+@media (max-width: 1350px) {
+
+  body {
+    padding-left: 55px;
+    padding-right: 55px;
+  }
+
+  :root {
+    --panel-width: 310px;
+  }
+
+  .browser-tab {
+    min-width: 125px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .browser-brand {
+    width: 225px;
+  }
+
+  .brand-name {
+    font-size: 20px;
+  }
+
+  .brand-logo svg,
+  .brand-logo .bike-logo-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    flex-basis: 40px;
+  }
+
+  .overview-grid .overview-number {
+    font-size: 20px;
+  }
+
+  .floating-filter {
+    width: 195px;
+  }
+
+  .risk-legend-bar {
+    gap: 12px;
+    padding: 8px 12px;
+  }
+
+  .legend-heading {
+    flex-basis: 100px;
+  }
+
+  .legend-segment {
+    font-size: 10px;
+  }
 }
