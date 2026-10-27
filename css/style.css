@@ -1,73 +1,771 @@
 
-/* ========================================
-   브라우저 바깥 배경 여백 조정
-   ======================================== */
+/* ======================================
+   BIKE SAFE - 공통 디자인
+   ====================================== */
+
+:root {
+  --navy: #193e65;
+  --blue: #2463a0;
+  --text: #193b61;
+  --muted: #637b94;
+  --border: #d6e4f1;
+  --yellow: #ffc84d;
+  --orange: #ff963c;
+  --red: #ff5757;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  min-width: 1050px;
+}
 
 body {
-  padding-left: 100px;
-  padding-right: 100px;
+  margin: 0;
+  min-height: 100vh;
+  padding: 38px 100px 48px;
+  background: linear-gradient(135deg, #e8f4fc, #d3e5f2);
+  color: var(--text);
+  font-family:
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    Arial,
+    sans-serif;
+  font-size: 14px;
 }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ======================================
+   브라우저 프레임
+   ====================================== */
 
 .browser-shell {
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+  display: block;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid #b9cfe0;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 16px 42px rgba(30,70,105,.18);
 }
 
-/* 기존 반응형 규칙보다 우선 적용 */
-@media (max-width: 1300px) {
-  body {
-    padding-left: 65px;
-    padding-right: 65px;
-  }
+/* ======================================
+   상단바
+   ====================================== */
+
+.browser-bar {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 75px;
+  gap: 0;
+  padding: 0 20px;
+  background: linear-gradient(180deg,#486b86,#34546f);
 }
 
-
-/* =========================================
-   상단 탭 및 BIKE SAFE 로고 모양 수정
-   ========================================= */
-
-/* 1. 메뉴 탭: 기울어진 모양 제거 */
-.browser-tab::before {
-  transform: none;
-  border-radius: 17px 17px 0 0;
-  left: 4px;
-  right: 4px;
+.window-controls {
+  display: flex;
+  align-self: center;
+  flex-shrink: 0;
+  gap: 9px;
+  margin-right: 26px;
 }
 
-/* 메뉴 탭은 기존 위치 그대로 유지 */
-.browser-tab {
-  margin-right: 0;
+.window-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
 }
 
-/* 2. BIKE SAFE 로고: 기존 크기와 위치 유지 */
-.browser-brand {
-  position: relative;
-  isolation: isolate;
-  border-radius: 0 18px 0 0;
+.window-dot.red {
+  background: #ff615e;
+}
+
+.window-dot.yellow {
+  background: #ffbd44;
+}
+
+.window-dot.green {
+  background: #28c940;
+}
+
+/* 평범하게 윗부분만 둥근 탭 */
+
+.browser-tabs {
+  display: flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  gap: 5px;
+  height: 100%;
+  padding: 0;
+  margin: 0;
   background: transparent;
 }
 
-/* 로고 배경의 왼쪽만 비스듬하게 */
+.browser-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  height: 51px;
+  padding: 0 19px;
+  border-radius: 17px 17px 0 0;
+  background: #bad0e1;
+  color: #304e68;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.browser-tab:hover {
+  background: #dce8f2;
+}
+
+.browser-tab.active {
+  background: #fff;
+  color: var(--navy);
+}
+
+/* ======================================
+   오른쪽 BIKE SAFE 로고
+   ====================================== */
+
+.browser-brand {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  flex-shrink: 0;
+  width: 255px;
+  margin-left: auto;
+  margin-right: -20px;
+  padding: 0 17px 0 26px;
+  isolation: isolate;
+  color: var(--navy);
+}
+
 .browser-brand::before {
   content: "";
   position: absolute;
   z-index: -1;
-
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-
+  inset: 0;
   background: #f8fbff;
-  border-radius: 17px 18px 0 0;
-
-  transform: skewX(-15deg);
+  border-radius: 18px 18px 0 0;
+  transform: skewX(-14deg);
   transform-origin: bottom right;
 }
 
-/* 로고 아이콘과 글자는 기울어지지 않음 */
 .brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+/* SVG 폭과 높이 반드시 고정 */
+.brand-logo .bike-logo-icon,
+.brand-logo svg {
+  display: block;
+  width: 45px !important;
+  height: 45px !important;
+  min-width: 45px;
+  max-width: 45px;
+  max-height: 45px;
+  flex: 0 0 45px;
+}
+
+.brand-name {
+  color: var(--navy);
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.brand-subtitle {
+  margin-top: 5px;
+  color: #54708c;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/* ======================================
+   메인 지도
+   ====================================== */
+
+.workspace {
   position: relative;
-  z-index: 1;
+  min-width: 0;
+  background: #f8fbff;
+}
+
+.bike-map-page .map-workspace {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.bike-map-page .map-layout {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 730px;
+  min-height: 730px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #e8eeeb;
+}
+
+.bike-map-page #map {
+  position: absolute;
+  display: block;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: #e8eeeb;
+}
+
+/* ======================================
+   왼쪽 상세정보
+   ====================================== */
+
+.bike-map-page .detail-panel {
+  display: none;
+  position: absolute;
+  z-index: 30;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 350px;
+  height: 100%;
+  min-width: 0;
+  max-height: none;
+  padding: 20px;
+  overflow-y: auto;
+  background: white;
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: 5px 0 20px rgba(21,56,88,.13);
+}
+
+/* 클릭했을 때만 표시 */
+.bike-map-page .map-layout.active .detail-panel {
+  display: block;
+}
+
+.panel-header {
+  position: sticky;
+  top: -20px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0 14px;
+  margin-bottom: 16px;
+  background: white;
+}
+
+.panel-title {
+  margin: 0;
+  color: var(--navy);
+  font-size: 17px;
+}
+
+.close-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #edf4fa;
+  color: var(--muted);
+  font-size: 23px;
+}
+
+.region-name {
+  margin: 8px 0 17px;
+  color: var(--navy);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid #e8eff6;
+}
+
+.detail-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.detail-value {
+  color: var(--navy);
+  font-weight: 750;
+}
+
+.year-heading {
+  margin: 20px 0 10px;
+  color: var(--navy);
+  font-size: 15px;
+}
+
+.year-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.year-table th,
+.year-table td {
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+
+.year-table th {
+  background: #edf5fc;
+}
+
+.year-table tfoot {
+  background: #f2f6fa;
+  font-weight: 700;
+}
+
+.year-note,
+.score-caption {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.score-box {
+  margin-top: 19px;
+  padding: 17px;
+  border-radius: 11px;
+  background: #fff0f0;
+  color: #c03945;
+  text-align: center;
+}
+
+.score-number {
+  display: block;
+  margin-top: 8px;
+  font-size: 29px;
+}
+
+/* ======================================
+   지도 오른쪽 위 지역 선택
+   ====================================== */
+
+.floating-filter {
+  position: absolute;
+  z-index: 20;
+  top: 19px;
+  right: 21px;
+  width: 210px;
+  padding: 13px;
+  border: 1px solid #d4e1ed;
+  border-radius: 12px;
+  background: rgba(255,255,255,.97);
+  box-shadow: 0 5px 18px rgba(19,53,85,.14);
+}
+
+.floating-filter label {
+  display: block;
+  margin-bottom: 9px;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.floating-filter select {
+  width: 100%;
+  height: 41px;
+  padding: 0 12px;
+  border: 1px solid #cfdeeb;
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.filter-caption {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ======================================
+   API 조회 상태
+   ====================================== */
+
+.status,
+.analysis-status {
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(255,255,255,.96);
+  color: var(--navy);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.map-status {
+  position: absolute;
+  z-index: 12;
+  top: 19px;
+  left: 20px;
+  width: fit-content;
+  max-width: 420px;
+}
+
+.map-layout.active .map-status {
+  display: none;
+}
+
+/* ======================================
+   하단 얇은 위험도 범례
+   ====================================== */
+
+.risk-legend-bar {
+  position: absolute;
+  z-index: 15;
+  left: 20px;
+  right: 20px;
+  bottom: 17px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 46px;
+  padding: 8px 17px;
+  border: 1px solid #d4e1ed;
+  border-radius: 10px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 4px 16px rgba(19,53,85,.12);
+  pointer-events: none;
+}
+
+.legend-heading {
+  display: flex;
+  flex: 0 0 115px;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.legend-heading strong {
+  font-size: 12px;
+  color: var(--navy);
+}
+
+.legend-heading span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.legend-scale {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  flex: 1;
+  gap: 7px;
+}
+
+.legend-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: center;
+  color: #3b5873;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.legend-line {
+  width: 100%;
+  height: 4px;
+  border-radius: 20px;
+}
+
+.legend-line.low {
+  background: var(--yellow);
+}
+
+.legend-line.medium {
+  background: var(--orange);
+}
+
+.legend-line.high {
+  background: var(--red);
+}
+
+/* 왼쪽 패널에 범례가 가려지지 않도록 */
+.map-layout.active .risk-legend-bar {
+  left: 370px;
+}
+
+/* ======================================
+   지도 마커
+   ====================================== */
+
+.risk-marker {
+  display: block;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  cursor: pointer;
+}
+
+.risk-marker.low {
+  background: var(--yellow);
+}
+
+.risk-marker.medium {
+  background: var(--orange);
+}
+
+.risk-marker.high {
+  background: var(--red);
+}
+
+/* ======================================
+   JavaScript 호환용 숨김 영역
+   ====================================== */
+
+.data-only,
+.data-only * {
+  display: none !important;
+}
+
+/* ======================================
+   다른 페이지 공통 구성
+   ====================================== */
+
+.bike-subpage .workspace {
+  min-height: 690px;
+}
+
+.card {
+  margin-bottom: 18px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: white;
+}
+
+.description {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 17px;
+  border: none;
+  border-radius: 9px;
+  background: var(--blue);
+  color: white;
+  font-weight: 700;
+}
+
+.button-outline {
+  border: 1px solid #bfd2e3;
+  background: white;
+  color: var(--navy);
+}
+
+/* 구버전 소개·분석 페이지 호환 */
+body:not(.bike-map-page):not(.bike-subpage) > header {
+  padding: 25px 30px;
+  background: #345572;
+  color: white;
+}
+
+body:not(.bike-map-page):not(.bike-subpage) > nav {
+  display: flex;
+  gap: 10px;
+  padding: 12px 24px;
+  background: #f1f6fb;
+}
+
+body:not(.bike-map-page):not(.bike-subpage) > nav a {
+  padding: 10px 17px;
+  color: var(--navy);
+}
+
+body:not(.bike-map-page):not(.bike-subpage) > main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 25px;
+}
+
+.analysis-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 15px;
+}
+
+.ranking-item {
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ranking-title {
+  font-weight: 750;
+  color: var(--navy);
+}
+
+.ranking-info,
+.analysis-coverage,
+.analysis-note {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.bar-background {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #e9eff5;
+}
+
+.bar {
+  height: 100%;
+  background: linear-gradient(90deg,#ffa84b,#ff6262);
+  border-radius: 20px;
+}
+
+.info-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-tab {
+  padding: 13px 20px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.info-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--blue);
+}
+
+.keyword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.keyword-chip {
+  padding: 12px 16px;
+  border-radius: 9px;
+  background: #eaf4fd;
+  color: var(--navy);
+  font-weight: 700;
+}
+
+footer,
+.app-footer {
+  margin: 0;
+  padding: 11px 20px;
+  border-top: 1px solid var(--border);
+  background: #f6faff;
+  color: var(--muted);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* ======================================
+   작은 PC 화면
+   ====================================== */
+
+@media (max-width: 1350px) {
+  body {
+    padding-left: 55px;
+    padding-right: 55px;
+  }
+
+  .browser-tab {
+    min-width: 125px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .browser-brand {
+    width: 225px;
+  }
+
+  .brand-name {
+    font-size: 20px;
+  }
+
+  .brand-logo .bike-logo-icon,
+  .brand-logo svg {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px;
+    max-width: 40px;
+    max-height: 40px;
+    flex-basis: 40px;
+  }
+
+  .detail-panel {
+    width: 310px;
+  }
+
+  .map-layout.active .risk-legend-bar {
+    left: 330px;
+  }
 }
