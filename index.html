@@ -15,14 +15,14 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f3f6fa;
+      background: #f3f6fa;
       color: #243247;
     }
 
     header {
-      background-color: #173b63;
+      background: #173b63;
       color: white;
-      padding: 28px 20px;
+      padding: 30px 16px;
       text-align: center;
     }
 
@@ -36,6 +36,24 @@
       font-size: 14px;
     }
 
+    nav {
+      background: white;
+      padding: 17px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    nav a {
+      color: #173b63;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 0 15px;
+    }
+
+    nav a:hover {
+      color: #2785d8;
+    }
+
     main {
       max-width: 1050px;
       margin: 30px auto;
@@ -45,9 +63,9 @@
     .card {
       background: white;
       border-radius: 14px;
-      padding: 22px;
+      padding: 24px;
       margin-bottom: 20px;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
     }
 
     h2 {
@@ -58,19 +76,72 @@
     .description {
       color: #64748b;
       line-height: 1.7;
+      font-size: 14px;
     }
 
     #map {
       width: 100%;
-      height: 460px;
-      border-radius: 10px;
+      height: 480px;
       background: #e5e7eb;
+      border-radius: 10px;
+      margin-top: 18px;
     }
 
-    #status {
-      color: #52657c;
+    .status {
+      padding: 15px;
+      background: #eef4fb;
+      border-radius: 10px;
+      margin-top: 16px;
+      line-height: 1.6;
       font-size: 14px;
-      margin-top: 14px;
+    }
+
+    .info {
+      padding: 12px;
+      min-width: 220px;
+      max-width: 270px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #243247;
+      white-space: normal;
+    }
+
+    .info strong {
+      font-size: 14px;
+      color: #173b63;
+    }
+
+    .info .risk {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 13px 22px;
+      background: #173b63;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background: #275b91;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .outline {
+      background: #e8eef6;
+      color: #173b63;
     }
 
     footer {
@@ -78,6 +149,7 @@
       padding: 25px;
       color: #64748b;
       font-size: 13px;
+      line-height: 1.8;
     }
 
     @media (max-width: 600px) {
@@ -86,7 +158,15 @@
       }
 
       #map {
-        height: 350px;
+        height: 380px;
+      }
+
+      .card {
+        padding: 17px;
+      }
+
+      nav a {
+        margin: 0 9px;
       }
     }
   </style>
@@ -99,69 +179,372 @@
     <p>공공데이터 기반 자전거 교통사고 위험지역 분석</p>
   </header>
 
+  <nav>
+    <a href="index.html">메인 지도</a>
+    <a href="analysis.html">사고 분석</a>
+  </nav>
+
   <main>
 
     <section class="card">
       <h2>프로젝트 소개</h2>
+
       <p class="description">
-        이 웹사이트는 공공데이터포털의
-        자전거 교통사고 데이터를 활용하여
-        사고 위험지역을 분석하는 서비스입니다.
+        공공데이터포털에서 제공하는 자전거 교통사고
+        다발지역 정보를 활용하여 사고 위험지역을
+        지도에 표시하고 위험도를 분석하는 웹앱입니다.
       </p>
     </section>
 
     <section class="card">
-      <h2>자전거 사고 위험지역 지도</h2>
+      <h2>자전거 사고다발지역 지도</h2>
 
       <p class="description">
-        현재는 카카오맵 연결 테스트 단계입니다.
-        이후 사고다발지역과 위험도 분석 기능을
-        추가할 예정입니다.
+        현재 조회 지역: 2023년 서울특별시 강남구
+      </p>
+
+      <p class="description">
+        지도에 표시된 마커를 클릭하면
+        사고 건수와 위험도 점수를 확인할 수 있습니다.
       </p>
 
       <div id="map"></div>
 
-      <p id="status">지도 연결을 확인하고 있어요.</p>
+      <div id="status" class="status" role="status">
+        지도를 준비하고 있어요.
+      </div>
+
+      <div class="actions">
+        <button
+          class="button outline"
+          onclick="loadAccidentMarkers()">
+          사고지역 다시 불러오기
+        </button>
+
+        <a href="analysis.html" class="button">
+          상세 사고 분석 보기
+        </a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>위험도 분석 안내</h2>
+
+      <p class="description">
+        사고 건수와 인명피해 정보를 이용해
+        자체 위험도 점수를 계산합니다.
+        점수가 높을수록 조회된 사고다발지역 중
+        상대적으로 위험도가 높은 지역입니다.
+      </p>
+
+      <p class="description">
+        위험도 점수는 과제용 자체 분석 지표이며
+        공식 위험등급이나 실제 사고 발생 확률을
+        의미하지 않습니다.
+      </p>
     </section>
 
   </main>
 
   <footer>
+    자료: 한국도로교통공단 자전거 교통사고 다발지역 OpenAPI
+    <br>
     모바일프로그래밍 중간고사 프로젝트
   </footer>
 
-  <!-- 카카오맵 JavaScript SDK -->
+  <!-- 수정 1: 카카오 JavaScript 키 -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=aaf0869a7864218624db2f9072c41ddc"></script>
 
   <script>
+
+    // ============================
+    // 수정 2: GAS 웹 앱 주소
+    // ============================
+
+    const GAS_URL =
+      "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
+
+    // ============================
+    // 지도 및 변수 설정
+    // ============================
+
+    let map = null;
+    let markers = [];
+    let infoWindow = null;
+    let requestNumber = 0;
+    let loading = false;
+
+    const statusBox = document.getElementById("status");
+
+    // ============================
+    // JSONP 요청
+    // ============================
+
+    function requestJSONP(url) {
+
+      return new Promise(function(resolve, reject) {
+
+        requestNumber++;
+
+        const callbackName =
+          "mapCallback" + requestNumber;
+
+        const script = document.createElement("script");
+
+        let finished = false;
+
+        const timer = setTimeout(function() {
+          finish(new Error("데이터 요청 시간이 초과됐어요."));
+        }, 20000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+        }
+
+        function finish(error, data) {
+          if (finished) return;
+
+          finished = true;
+          cleanup();
+
+          if (error) {
+            reject(error);
+          } else {
+            resolve(data);
+          }
+        }
+
+        window[callbackName] = function(data) {
+          finish(null, data);
+        };
+
+        script.onerror = function() {
+          finish(new Error("GAS 서버 연결에 실패했어요."));
+        };
+
+        const separator = url.includes("?") ? "&" : "?";
+
+        script.src = url + separator +
+          "callback=" + encodeURIComponent(callbackName);
+
+        document.body.appendChild(script);
+
+      });
+    }
+
+    // ============================
+    // 지도 생성
+    // ============================
+
     function initMap() {
-      const status = document.getElementById("status");
 
       if (!window.kakao || !kakao.maps) {
-        status.textContent =
-          "지도 연결 실패: JavaScript 키와 도메인을 확인해 주세요.";
+        statusBox.textContent =
+          "카카오맵 연결 실패! JavaScript 키를 확인해 주세요.";
         return;
       }
 
+      // 서울 강남구 중심
+      const container = document.getElementById("map");
+
+      const options = {
+        center: new kakao.maps.LatLng(
+          37.4964,
+          127.0533
+        ),
+        level: 6
+      };
+
+      map = new kakao.maps.Map(container, options);
+
+      // 지도 생성 후 데이터 요청
+      loadAccidentMarkers();
+    }
+
+    // ============================
+    // 사고지역 데이터 가져오기
+    // ============================
+
+    async function loadAccidentMarkers() {
+
+      if (!map) {
+        statusBox.textContent =
+          "지도가 아직 준비되지 않았어요.";
+        return;
+      }
+
+      if (loading) return;
+
+      if (GAS_URL.includes("여기에_GAS")) {
+        statusBox.textContent =
+          "GAS 웹 앱 URL을 먼저 입력해 주세요.";
+        return;
+      }
+
+      loading = true;
+
+      statusBox.textContent =
+        "2023년 서울 강남구 사고 데이터를 불러오는 중...";
+
+      // 기존 마커 삭제
+      markers.forEach(function(marker) {
+        marker.setMap(null);
+      });
+
+      markers = [];
+
+      if (infoWindow) {
+        infoWindow.close();
+      }
+
+      const query =
+        "?year=2023&sido=11&gugun=680";
+
       try {
-        // 서울시청을 중심으로 지도 표시
-        const container = document.getElementById("map");
 
-        const options = {
-          center: new kakao.maps.LatLng(37.5665, 126.9780),
-          level: 8
-        };
+        const data = await requestJSONP(
+          GAS_URL + query
+        );
 
-        const map = new kakao.maps.Map(container, options);
+        if (!data || !data.success) {
+          throw new Error(
+            data && data.error
+              ? data.error
+              : "API 응답을 확인해 주세요."
+          );
+        }
 
-        status.textContent = "카카오맵 연결 성공!";
+        const accidents =
+          Array.isArray(data.accidents)
+            ? data.accidents
+            : [];
+
+        let validCount = 0;
+        let firstPosition = null;
+
+        accidents.forEach(function(item) {
+
+          const latitude = Number(item.latitude);
+          const longitude = Number(item.longitude);
+
+          if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude) ||
+            latitude < 33 ||
+            latitude > 39 ||
+            longitude < 124 ||
+            longitude > 132
+          ) {
+            return;
+          }
+
+          const position = new kakao.maps.LatLng(
+            latitude,
+            longitude
+          );
+
+          const marker = new kakao.maps.Marker({
+            position: position,
+            title: item.name
+          });
+
+          marker.setMap(map);
+          markers.push(marker);
+
+          if (!firstPosition) {
+            firstPosition = position;
+          }
+
+          validCount++;
+
+          // 마커를 클릭하면 정보창 표시
+          kakao.maps.event.addListener(
+            marker,
+            "click",
+            function() {
+              showAccidentInfo(marker, item);
+            }
+          );
+
+        });
+
+        if (firstPosition) {
+          map.setCenter(firstPosition);
+          map.setLevel(5);
+        }
+
+        statusBox.textContent =
+          "사고다발지역 " + accidents.length +
+          "곳 조회 완료! 지도에 " +
+          validCount + "개의 마커가 표시됐어요. " +
+          "마커를 클릭해서 사고 정보를 확인해 주세요.";
+
       } catch (error) {
-        status.textContent = "지도 표시 중 오류가 발생했어요.";
+
+        statusBox.textContent =
+          "데이터 조회 실패: " + error.message;
+
         console.error(error);
+
+      } finally {
+        loading = false;
       }
     }
 
+    // ============================
+    // 마커 클릭 시 사고 정보 표시
+    // ============================
+
+    function showAccidentInfo(marker, item) {
+
+      if (infoWindow) {
+        infoWindow.close();
+      }
+
+      // API 데이터를 HTML 문자열로 직접 삽입하지 않음
+      const content = document.createElement("div");
+      content.className = "info";
+
+      const title = document.createElement("strong");
+      title.textContent = item.name || "사고다발지역";
+
+      const details = document.createElement("div");
+
+      details.textContent =
+        "사고 건수: " + item.accidentCount + "건";
+
+      const casualties = document.createElement("div");
+
+      casualties.textContent =
+        "사상자 수: " + item.casualtyCount + "명";
+
+      const score = document.createElement("div");
+      score.className = "risk";
+
+      score.textContent =
+        "위험도 점수: " + item.riskScore + "점";
+
+      content.appendChild(title);
+      content.appendChild(details);
+      content.appendChild(casualties);
+      content.appendChild(score);
+
+      infoWindow = new kakao.maps.InfoWindow({
+        content: content,
+        removable: true
+      });
+
+      infoWindow.open(map, marker);
+    }
+
+    // ============================
+    // 페이지 시작
+    // ============================
+
     window.addEventListener("load", initMap);
+
   </script>
 
 </body>
