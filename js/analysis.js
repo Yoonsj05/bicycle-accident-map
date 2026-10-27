@@ -1,19 +1,26 @@
 
 /*
   BIKE SAFE - 사고 분석
-  서울 전체 백분위수 공통 위험도
+
+  일부 데이터 조회 실패 시에도
+  성공한 자료로 통계 및 그래프 표시
 */
 
 const ANALYSIS_GAS_URL =
   "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
 
+const REQUEST_TIMEOUT = 30000;
+const MAX_RETRIES = 2;
 const CACHE_TIME = 60 * 60 * 1000;
 
 let riskTools = null;
 let reference = null;
+let referenceIsPartial = false;
+
 let allData = [];
 let failedJobs = [];
-let requestCounter = 0;
+
+let counter = 0;
 let loading = false;
 
 const districtSelect =
@@ -25,8 +32,13 @@ const analyzeButton =
 const statusBox =
   document.getElementById("analysisStatus");
 
+// ====================================
+// 1. 기본 함수
+// ====================================
+
 function num(value) {
-  return Number(value) || 0;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function fmt(value) {
@@ -35,23 +47,43 @@ function fmt(value) {
 
 function setText(id, value) {
   const element = document.getElementById(id);
-  if (element) element.textContent = value;
+
+  if (element) {
+    element.textContent = value;
+  }
 }
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function districtName(code) {
+  const option = Array.from(
+    districtSelect.options
+  ).find(item => item.value === code);
+
+  return option ? option.textContent : code;
+}
+
+// ====================================
+// 2. JSONP
+// ====================================
 
 function jsonp(url) {
   return new Promise((resolve, reject) => {
     const callback =
-      "bikeAnalysisCallback" + (++requestCounter);
+      "bikeAnalysisCallback_" + (++counter);
 
     const script = document.createElement("script");
     let finished = false;
 
     const timer = setTimeout(() => {
-      finish(new Error("요청 시간 초과"));
-    }, 30000);
+      finish(new Error("30초 응답 시간 초과"));
+    }, REQUEST_TIMEOUT);
 
     function finish(error, data) {
       if (finished) return;
+
       finished = true;
       clearTimeout(timer);
       script.remove();
@@ -66,8 +98,10 @@ function jsonp(url) {
     }
 
     window[callback] = data => finish(null, data);
-    script.onerror = () =>
-      finish(new Error("연결 실패"));
+
+    script.onerror = () => {
+      finish(new Error("GAS 스크립트 연결 오류"));
+    };
 
     script.src =
       url +
@@ -78,24 +112,34 @@ function jsonp(url) {
   });
 }
 
+// ====================================
+// 3. 캐시
+// ====================================
+
+function cacheKey(year, district) {
+  return "bicycle_v3_" + year + "_" + district;
+}
+
 function getCache(year, district) {
   try {
-    const value = localStorage.getItem(
-      "bicycle_v3_" + year + "_" + district
+    const raw = localStorage.getItem(
+      cacheKey(year, district)
     );
 
-    if (!value) return null;
+    if (!raw) return null;
 
-    const cached = JSON.parse(value);
+    const saved = JSON.parse(raw);
 
     if (
-      !cached ||
-      !Array.isArray(cached.items) ||
-      Date.now() - cached.savedAt > CACHE_TIME
-    ) return null;
+      !saved ||
+      !Array.isArray(saved.items) ||
+      Date.now() - saved.savedAt > CACHE_TIME
+    ) {
+      return null;
+    }
 
-    return cached.items;
-  } catch (error) {
+    return saved.items;
+  } catch {
     return null;
   }
 }
@@ -103,7 +147,7 @@ function getCache(year, district) {
 function saveCache(year, district, items) {
   try {
     localStorage.setItem(
-      "bicycle_v3_" + year + "_" + district,
+      cacheKey(year, district),
       JSON.stringify({
         savedAt: Date.now(),
         items
@@ -113,6 +157,10 @@ function saveCache(year, district, items) {
     console.warn("캐시 저장 생략", error);
   }
 }
+
+// ====================================
+// 4. 데이터 가져오기
+// ====================================
 
 async function fetchData(year, district) {
   const cached = getCache(year, district);
@@ -128,40 +176,81 @@ async function fetchData(year, district) {
 
   if (!response || response.success !== true) {
     throw new Error(
-      response && response.error
-        ? response.error
-        : "데이터 조회 실패"
+      response && (response.error || response.message)
+        ? String(response.error || response.message)
+        : "GAS 응답 success=false"
     );
   }
 
-  const items = (
-    Array.isArray(response.accidents)
-      ? response.accidents
-      : []
-  ).map(item => ({
+  if (!Array.isArray(response.accidents)) {
+    throw new Error("사고 데이터 형식 오류");
+  }
+
+  const items = response.accidents.map(item => ({
     ...item,
-    year,
-    districtCode: district
+    year: String(year),
+    districtCode: String(district)
   }));
 
   saveCache(year, district, items);
+
   return items;
 }
+
+// ====================================
+// 5. 실패 시 재시도
+// ====================================
+
+async function fetchWithRetry(year, district) {
+  let lastError;
+
+  for (
+    let attempt = 0;
+    attempt <= MAX_RETRIES;
+    attempt++
+  ) {
+    try {
+      if (attempt > 0) {
+        await sleep(
+          700 * attempt + Math.random() * 400
+        );
+      }
+
+      return await fetchData(year, district);
+
+    } catch (error) {
+      lastError = error;
+
+      console.warn(
+        `[분석] ${year}년 ${districtName(district)} ` +
+        `요청 ${attempt + 1}회 실패:`,
+        error.message
+      );
+    }
+  }
+
+  throw lastError;
+}
+
+// ====================================
+// 6. 서울 전체 조회
+// ====================================
 
 async function loadSeoulData() {
   if (loading) return;
 
   loading = true;
+
   analyzeButton.disabled = true;
   districtSelect.disabled = true;
 
   const jobs = [];
 
-  riskTools.RISK_YEARS.forEach(year => {
-    riskTools.RISK_DISTRICTS.forEach(district => {
+  for (const year of riskTools.RISK_YEARS) {
+    for (const district of riskTools.RISK_DISTRICTS) {
       jobs.push({ year, district });
-    });
-  });
+    }
+  }
 
   const results = [];
   const failures = [];
@@ -174,55 +263,90 @@ async function loadSeoulData() {
       const job = jobs[next++];
 
       try {
-        const items = await fetchData(
+        const items = await fetchWithRetry(
           job.year,
           job.district
         );
 
         results.push(...items);
+
       } catch (error) {
-        failures.push(job);
-        console.error("분석 조회 실패", job, error);
+        failures.push({
+          year: job.year,
+          district: job.district,
+          districtName: districtName(job.district),
+          reason: error.message
+        });
       }
 
       completed++;
+
       statusBox.textContent =
-        `서울 전체 데이터 조회 ${completed}/${jobs.length}`;
+        `서울 데이터 조회 중 ${completed}/${jobs.length}`;
     }
   }
 
   try {
     await Promise.all([
-      worker(), worker(), worker()
+      worker(),
+      worker()
     ]);
-
-    if (failures.length === jobs.length) {
-      throw new Error(
-        "모든 데이터 요청에 실패했어."
-      );
-    }
 
     allData = results;
     failedJobs = failures;
 
-    if (failures.length === 0) {
-      const groups =
-        riskTools.groupRiskAccidents(allData);
+    window.BIKE_SAFE_ANALYSIS_FAILURES = failures;
 
+    console.group("BIKE SAFE 분석 요청 결과");
+    console.log(
+      `${jobs.length}건 중 ` +
+      `${jobs.length - failures.length}건 성공`
+    );
+
+    if (failures.length) {
+      console.table(failures);
+    }
+
+    console.groupEnd();
+
+    if (failures.length === jobs.length) {
+      throw new Error("모든 요청에 실패했어.");
+    }
+
+    const groups =
+      riskTools.groupRiskAccidents(allData);
+
+    if (failures.length === 0) {
       reference =
         riskTools.createRiskReference(groups);
 
+      referenceIsPartial = false;
+
       riskTools.saveRiskReference(reference);
+
     } else {
-      reference = riskTools.readRiskReference();
+      const saved =
+        riskTools.readRiskReference();
+
+      if (saved) {
+        reference = saved;
+        referenceIsPartial = false;
+      } else {
+        reference =
+          riskTools.createRiskReference(groups);
+
+        referenceIsPartial = true;
+      }
     }
 
     renderAnalysis();
 
   } catch (error) {
     statusBox.textContent =
-      "분석 실패: " + error.message;
+      "분석 오류: " + error.message;
+
     console.error(error);
+
   } finally {
     loading = false;
     analyzeButton.disabled = false;
@@ -230,24 +354,32 @@ async function loadSeoulData() {
   }
 }
 
-function getSelectedData() {
-  const selected = districtSelect.value;
+// ====================================
+// 7. 필터
+// ====================================
 
-  return selected === "all"
+function selectedData() {
+  const district = districtSelect.value;
+
+  return district === "all"
     ? allData
     : allData.filter(
-        item => item.districtCode === selected
+        item => item.districtCode === district
       );
 }
 
-function getSelectedFailures() {
-  const selected = districtSelect.value;
+function selectedFailures() {
+  const district = districtSelect.value;
 
   return failedJobs.filter(
-    job => selected === "all" ||
-      job.district === selected
+    item => district === "all" ||
+      item.district === district
   );
 }
+
+// ====================================
+// 8. 위험지역 TOP 5
+// ====================================
 
 function renderRanking(groups) {
   const container =
@@ -255,22 +387,22 @@ function renderRanking(groups) {
 
   container.replaceChildren();
 
-  const sorted = [...groups]
+  const topFive = [...groups]
     .sort((a, b) => b.riskScore - a.riskScore)
     .slice(0, 5);
 
-  if (!sorted.length) {
+  if (!topFive.length) {
     container.textContent =
-      "조회된 사고다발지역이 없어.";
+      "확인된 사고지역이 없어.";
     return;
   }
 
-  const maximum = Math.max(
+  const max = Math.max(
     1,
-    ...sorted.map(item => item.riskScore)
+    ...topFive.map(item => item.riskScore)
   );
 
-  sorted.forEach((item, index) => {
+  topFive.forEach((item, index) => {
     const row = document.createElement("div");
     row.className = "ranking-item";
 
@@ -290,59 +422,67 @@ function renderRanking(groups) {
     const info = document.createElement("p");
     info.className = "ranking-info";
 
-    const level = riskTools.getRiskLabel(
-      item.riskScore,
-      reference
-    );
-
     info.textContent =
       `사고 ${fmt(item.accidentCount)}건 · ` +
       `사상자 ${fmt(item.casualtyCount)}명 · ` +
-      `${level}`;
+      riskTools.getRiskLabel(
+        item.riskScore,
+        reference
+      );
 
-    const track = document.createElement("div");
-    track.className = "bar-background";
+    const background = document.createElement("div");
+    background.className = "bar-background";
 
     const bar = document.createElement("div");
     bar.className = "bar";
 
     bar.style.width =
-      (item.riskScore / maximum * 100) + "%";
+      (item.riskScore / max * 100) + "%";
 
-    track.appendChild(bar);
-    row.append(title, info, track);
+    background.appendChild(bar);
+
+    row.append(title, info, background);
     container.appendChild(row);
   });
 }
 
+// ====================================
+// 9. 연도별 통계
+// ====================================
+
 function calculateYearly(items, failures) {
-  const values = {};
+  const yearly = {};
 
   riskTools.RISK_YEARS.forEach(year => {
-    values[year] = {
+    yearly[year] = {
       accidents: 0,
       casualties: 0,
       score: 0,
       failed: failures.some(
-        job => job.year === year
+        item => item.year === year
       )
     };
   });
 
   items.forEach(item => {
     const year = String(item.year);
-    if (!values[year]) return;
+    if (!yearly[year]) return;
 
-    values[year].accidents += num(item.accidentCount);
-    values[year].casualties += num(item.casualtyCount);
-    values[year].score +=
+    yearly[year].accidents += num(item.accidentCount);
+    yearly[year].casualties += num(item.casualtyCount);
+
+    yearly[year].score +=
       riskTools.getAccidentScore(item);
   });
 
-  return values;
+  return yearly;
 }
 
-function renderYearlyChart(yearly) {
+// ====================================
+// 10. 연도별 그래프
+// ====================================
+
+function renderChart(yearly) {
   const container =
     document.getElementById("yearlyChart");
 
@@ -350,14 +490,12 @@ function renderYearlyChart(yearly) {
 
   container.replaceChildren();
 
-  const maxValue = Math.max(
+  const maximum = Math.max(
     1,
-    ...riskTools.RISK_YEARS.flatMap(
-      year => [
-        yearly[year].accidents,
-        yearly[year].casualties
-      ]
-    )
+    ...riskTools.RISK_YEARS.flatMap(year => [
+      yearly[year].accidents,
+      yearly[year].casualties
+    ])
   );
 
   riskTools.RISK_YEARS.forEach(year => {
@@ -369,40 +507,57 @@ function renderYearlyChart(yearly) {
     const bars = document.createElement("div");
     bars.className = "year-bars";
 
-    [
-      { value: item.accidents, color: "blue" },
-      { value: item.casualties, color: "red" }
-    ].forEach(data => {
+    const barData = [
+      {
+        value: item.accidents,
+        className: "blue"
+      },
+      {
+        value: item.casualties,
+        className: "red"
+      }
+    ];
+
+    barData.forEach(data => {
       const wrap = document.createElement("div");
       wrap.className = "year-bar-wrap";
 
       const bar = document.createElement("div");
-      bar.className = "year-bar " + data.color;
+      bar.className =
+        "year-bar " + data.className;
 
       bar.style.height =
-        Math.max(2, data.value / maxValue * 100) + "%";
+        Math.max(
+          2,
+          data.value / maximum * 100
+        ) + "%";
 
       const label = document.createElement("span");
       label.className = "year-bar-value";
 
       label.textContent =
-        fmt(data.value) + (item.failed ? "*" : "");
+        fmt(data.value) +
+        (item.failed ? "*" : "");
 
       bar.appendChild(label);
       wrap.appendChild(bar);
       bars.appendChild(wrap);
     });
 
-    const yearName = document.createElement("span");
-    yearName.className = "year-name";
-    yearName.textContent = year;
+    const name = document.createElement("span");
+    name.className = "year-name";
+    name.textContent = year;
 
-    group.append(bars, yearName);
+    group.append(bars, name);
     container.appendChild(group);
   });
 }
 
-function renderYearlyTable(yearly) {
+// ====================================
+// 11. 연도별 표
+// ====================================
+
+function renderTable(yearly) {
   const tbody =
     document.getElementById("yearlyTableBody");
 
@@ -411,59 +566,72 @@ function renderYearlyTable(yearly) {
   tbody.replaceChildren();
 
   riskTools.RISK_YEARS.forEach(year => {
-    const item = yearly[year];
-    const tr = document.createElement("tr");
+    const data = yearly[year];
 
-    const cells = [
-      year + (item.failed ? " *" : ""),
-      fmt(item.accidents) + "건",
-      fmt(item.casualties) + "명",
-      fmt(item.score) + "점"
+    const row = document.createElement("tr");
+
+    const values = [
+      year + (data.failed ? " *" : ""),
+      fmt(data.accidents) + "건",
+      fmt(data.casualties) + "명",
+      fmt(data.score) + "점"
     ];
 
-    cells.forEach(value => {
+    values.forEach(value => {
       const td = document.createElement("td");
       td.textContent = value;
-      tr.appendChild(td);
+      row.appendChild(td);
     });
 
-    tbody.appendChild(tr);
+    tbody.appendChild(row);
   });
 }
 
-function renderAnalysis() {
-  if (!riskTools || !allData.length) return;
+// ====================================
+// 12. 분석 결과 표시
+// ====================================
 
-  const selected = getSelectedData();
-  const failures = getSelectedFailures();
+function renderAnalysis() {
+  const items = selectedData();
+  const failures = selectedFailures();
 
   const groups =
-    riskTools.groupRiskAccidents(selected);
+    riskTools.groupRiskAccidents(items);
 
-  setText("analysisSpotCount", fmt(groups.length));
+  setText(
+    "analysisSpotCount",
+    fmt(groups.length)
+  );
 
   setText(
     "analysisAccidentCount",
-    fmt(selected.reduce(
-      (sum, item) => sum + num(item.accidentCount),
-      0
-    ))
+    fmt(
+      items.reduce(
+        (sum, item) => sum + num(item.accidentCount),
+        0
+      )
+    )
   );
 
   setText(
     "analysisCasualtyCount",
-    fmt(selected.reduce(
-      (sum, item) => sum + num(item.casualtyCount),
-      0
-    ))
+    fmt(
+      items.reduce(
+        (sum, item) => sum + num(item.casualtyCount),
+        0
+      )
+    )
   );
 
   renderRanking(groups);
 
-  const yearly = calculateYearly(selected, failures);
+  const yearly = calculateYearly(
+    items,
+    failures
+  );
 
-  renderYearlyChart(yearly);
-  renderYearlyTable(yearly);
+  renderChart(yearly);
+  renderTable(yearly);
 
   const region =
     districtSelect.options[
@@ -471,47 +639,62 @@ function renderAnalysis() {
     ].text;
 
   let message =
-    `${region} · 2021~2023년 분석 완료`;
+    `${region} · 분석 완료`;
+
+  if (failedJobs.length) {
+    message +=
+      ` · 전체 요청 ${failedJobs.length}건 실패`;
+  }
 
   if (failures.length) {
-    message +=
-      ` · 조회 실패 ${failures.length}건`;
+    message += " · 선택 지역 일부 누락 가능";
+  }
+
+  if (referenceIsPartial) {
+    message += " · 임시 위험도 기준";
   }
 
   statusBox.textContent = message;
 
-  const totalJobs = districtSelect.value === "all"
-    ? riskTools.RISK_YEARS.length *
-      riskTools.RISK_DISTRICTS.length
-    : riskTools.RISK_YEARS.length;
-
-  const coverage = document.getElementById(
-    "analysisCoverage"
-  );
+  const coverage =
+    document.getElementById("analysisCoverage");
 
   if (coverage) {
+    const totalJobs = districtSelect.value === "all"
+      ? 75
+      : 3;
+
     coverage.textContent =
-      `조회 ${totalJobs}건 중 ` +
+      `선택 지역 요청 ${totalJobs}건 중 ` +
       `${totalJobs - failures.length}건 성공. ` +
       riskTools.getRiskDescription(reference) +
-      (reference
-        ? " · 자치구를 변경해도 동일 기준 적용."
-        : " · 위험도 등급은 확정하지 않음.");
+      (
+        referenceIsPartial
+          ? " · 부분 데이터 기반 임시 백분위수."
+          : " · 서울 전체 비교 기준."
+      ) +
+      " 조회에 실패한 기록은 합계에 포함되지 않아.";
   }
 }
 
-function analyzeRegion() {
-  if (!loading) renderAnalysis();
-}
+// ====================================
+// 13. 페이지 실행
+// ====================================
 
 window.addEventListener("load", async () => {
-  if (!districtSelect || !analyzeButton) return;
+  if (
+    !districtSelect ||
+    !analyzeButton ||
+    !statusBox
+  ) {
+    return;
+  }
 
   try {
     riskTools = await import("./risk.js");
   } catch (error) {
     statusBox.textContent =
-      "js/risk.js를 불러오지 못했어.";
+      "js/risk.js 파일을 불러오지 못했어.";
     console.error(error);
     return;
   }
@@ -523,13 +706,15 @@ window.addEventListener("load", async () => {
     !ANALYSIS_GAS_URL.endsWith("/exec")
   ) {
     statusBox.textContent =
-      "js/analysis.js의 GAS URL을 확인해 줘.";
+      "GAS 웹 앱 URL을 확인해 줘.";
     return;
   }
 
   analyzeButton.addEventListener(
     "click",
-    analyzeRegion
+    function() {
+      if (!loading) renderAnalysis();
+    }
   );
 
   await loadSeoulData();
