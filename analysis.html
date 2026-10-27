@@ -3,142 +3,75 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-  <title>자전거 사고 위험지역 분석</title>
+  <title>사고 분석 | 자전거 사고 위험지역 분석기</title>
 
+  <!-- 공통 CSS -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- 분석 페이지 전용 CSS -->
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f3f6fa;
-      color: #243247;
-    }
-
-    header {
-      background: #173b63;
-      color: white;
-      text-align: center;
-      padding: 30px 15px;
-    }
-
-    header h1 {
-      margin: 0 0 10px;
-      font-size: 25px;
-    }
-
-    header p {
-      margin: 0;
-      font-size: 14px;
-    }
-
-    nav {
-      background: white;
-      padding: 17px;
-      text-align: center;
-      border-bottom: 1px solid #ddd;
-    }
-
-    nav a {
-      color: #173b63;
-      text-decoration: none;
-      font-weight: bold;
-      margin: 0 15px;
-    }
-
-    main {
-      max-width: 1050px;
-      margin: 30px auto;
-      padding: 0 16px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-    }
-
-    h2 {
-      margin-top: 0;
-      font-size: 20px;
-    }
-
-    .description {
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    select, button {
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #cbd5e1;
-      font-size: 15px;
-    }
-
-    select {
-      width: 100%;
-      max-width: 350px;
-      background: white;
-      margin-bottom: 12px;
-    }
-
-    button {
-      display: block;
-      background: #173b63;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #275b91;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: wait;
-    }
-
-    .result {
+    .analysis-filter {
+      display: flex;
+      align-items: end;
+      flex-wrap: wrap;
+      gap: 14px;
       margin-top: 20px;
-      padding: 18px;
+      padding: 20px;
       background: #f1f5f9;
-      border-radius: 10px;
-      line-height: 1.7;
+      border-radius: 12px;
     }
 
-    .stats {
+    .analysis-filter .search-field {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .analysis-summary {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 20px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 22px;
     }
 
-    .stat-box {
+    .summary-box {
+      padding: 25px 12px;
       background: #eef4fb;
-      padding: 20px 10px;
       border-radius: 12px;
       text-align: center;
     }
 
-    .stat-number {
+    .summary-number {
       display: block;
-      font-size: 27px;
-      font-weight: bold;
+      margin-bottom: 10px;
       color: #173b63;
-      margin-bottom: 8px;
+      font-size: 30px;
+      font-weight: bold;
+      overflow-wrap: anywhere;
     }
 
-    .stat-label {
-      font-size: 13px;
+    .summary-label {
       color: #64748b;
+      font-size: 13px;
+    }
+
+    .analysis-status {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #eef4fb;
+      color: #243247;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .analysis-coverage {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.8;
+      margin-top: 16px;
     }
 
     .ranking-item {
@@ -146,59 +79,74 @@
       border-bottom: 1px solid #e5e7eb;
     }
 
+    .ranking-item:last-child {
+      border-bottom: none;
+    }
+
     .ranking-title {
-      font-weight: bold;
       font-size: 16px;
-      margin-bottom: 8px;
+      font-weight: bold;
+      color: #173b63;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
     }
 
     .ranking-info {
       color: #64748b;
       font-size: 14px;
       line-height: 1.7;
-    }
-
-    .score {
-      font-weight: bold;
-      color: #dc2626;
+      margin: 10px 0;
     }
 
     .bar-background {
       width: 100%;
       height: 14px;
+      border-radius: 20px;
       background: #e5e7eb;
-      border-radius: 10px;
-      margin-top: 12px;
       overflow: hidden;
     }
 
     .bar {
       height: 100%;
-      background: #ef4444;
-      border-radius: 10px;
       width: 0;
+      background: #173b63;
+      border-radius: 20px;
     }
 
     .empty {
-      text-align: center;
-      color: #94a3b8;
-      padding: 18px;
-    }
-
-    footer {
-      text-align: center;
-      padding: 25px;
       color: #64748b;
-      font-size: 13px;
+      padding: 30px 15px;
+      text-align: center;
+      line-height: 1.8;
     }
 
-    @media (max-width: 600px) {
-      header h1 {
-        font-size: 21px;
+    .analysis-note {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 760px) {
+      .analysis-filter {
+        flex-direction: column;
+        align-items: stretch;
       }
 
-      .stats {
+      .analysis-filter .search-field {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .analysis-summary {
         grid-template-columns: 1fr;
+      }
+
+      .summary-number {
+        font-size: 26px;
+      }
+
+      .analysis-filter .button {
+        width: 100%;
       }
     }
   </style>
@@ -206,96 +154,176 @@
 
 <body>
 
+  <!-- 상단 -->
   <header>
-    <h1>자전거 사고 위험지역 분석</h1>
-    <p>공공데이터 기반 교통사고 위험도 분석</p>
+    <h1>자전거 사고 위험지역 분석기</h1>
+    <p>공공데이터 기반 자전거 교통사고 분석</p>
   </header>
 
+  <!-- 3개 페이지 메뉴 -->
   <nav>
-    <a href="index.html">메인 지도</a>
+    <a href="index.html">사고 지도</a>
+    <a href="about.html">프로젝트 소개</a>
     <a href="analysis.html">사고 분석</a>
   </nav>
 
   <main>
 
+    <!-- 지역별 분석 -->
     <section class="card">
-      <h2>지역별 사고 분석</h2>
+      <h2>지역별 자전거 사고 분석</h2>
 
       <p class="description">
-        공공데이터 API를 이용해 자전거 사고다발지역을
-        분석합니다. 현재는 서울 강남구 연결 테스트 단계입니다.
+        2021년부터 2023년까지의 자전거 사고다발지역
+        자료를 통합하여 사고 현황을 분석합니다.
       </p>
 
-      <label for="region">분석 지역</label>
+      <div class="analysis-filter">
 
-      <br><br>
+        <div class="search-field">
+          <label for="analysisDistrict">
+            분석할 지역 선택
+          </label>
 
-      <select id="region">
-        <option value="680">서울특별시 강남구</option>
-      </select>
+          <select id="analysisDistrict">
+            <option value="all">서울 전체</option>
+            <option value="680">강남구</option>
+            <option value="740">강동구</option>
+            <option value="305">강북구</option>
+            <option value="500">강서구</option>
+            <option value="620">관악구</option>
+            <option value="215">광진구</option>
+            <option value="530">구로구</option>
+            <option value="545">금천구</option>
+            <option value="350">노원구</option>
+            <option value="320">도봉구</option>
+            <option value="230">동대문구</option>
+            <option value="590">동작구</option>
+            <option value="440">마포구</option>
+            <option value="410">서대문구</option>
+            <option value="650">서초구</option>
+            <option value="200">성동구</option>
+            <option value="290">성북구</option>
+            <option value="710">송파구</option>
+            <option value="470">양천구</option>
+            <option value="560">영등포구</option>
+            <option value="170">용산구</option>
+            <option value="380">은평구</option>
+            <option value="110">종로구</option>
+            <option value="140">중구</option>
+            <option value="260">중랑구</option>
+          </select>
+        </div>
 
-      <button id="analyzeButton" onclick="analyzeRegion()">
-        사고 위험지역 분석하기
-      </button>
+        <button
+          id="analyzeButton"
+          class="button"
+          onclick="analyzeRegion()">
+          사고 위험지역 분석하기
+        </button>
 
-      <div id="result" class="result" role="status">
-        분석 버튼을 눌러주세요.
       </div>
 
-      <div id="stats" class="stats" hidden>
+      <div id="analysisStatus"
+           class="analysis-status"
+           role="status">
+        분석 데이터를 준비하고 있어요.
+      </div>
 
-        <div class="stat-box">
-          <span id="spotCount" class="stat-number">0</span>
-          <span class="stat-label">사고다발지역 수</span>
+      <!-- 통계 요약 -->
+      <div id="analysisStats"
+           class="analysis-summary"
+           hidden>
+
+        <div class="summary-box">
+          <span id="analysisSpotCount"
+                class="summary-number">0</span>
+          <span class="summary-label">
+            사고다발지역 수
+          </span>
         </div>
 
-        <div class="stat-box">
-          <span id="accidentCount" class="stat-number">0</span>
-          <span class="stat-label">사고 발생 건수 합계</span>
+        <div class="summary-box">
+          <span id="analysisAccidentCount"
+                class="summary-number">0</span>
+          <span class="summary-label">
+            사고 발생 건수 합계
+          </span>
         </div>
 
-        <div class="stat-box">
-          <span id="casualtyCount" class="stat-number">0</span>
-          <span class="stat-label">사상자 수 합계</span>
+        <div class="summary-box">
+          <span id="analysisCasualtyCount"
+                class="summary-number">0</span>
+          <span class="summary-label">
+            사상자 수 합계
+          </span>
         </div>
 
       </div>
+
+      <p id="analysisCoverage"
+         class="analysis-coverage">
+        분석된 데이터 범위를 확인하고 있어요.
+      </p>
+
     </section>
 
+    <!-- TOP 5 분석 -->
     <section class="card">
       <h2>사고 위험지역 TOP 5</h2>
 
       <p class="description">
-        조회된 사고다발지역을 자체 위험도 점수에
-        따라 높은 순서대로 표시합니다.
+        사고 건수와 인명피해를 바탕으로
+        계산한 자체 위험도 점수가 높은
+        사고다발지역 5곳을 표시합니다.
       </p>
 
-      <div id="ranking">
-        <p class="empty">아직 분석된 데이터가 없습니다.</p>
+      <div id="analysisRanking">
+        <p class="empty">
+          데이터 조회 후 위험지역 순위가 표시됩니다.
+        </p>
       </div>
+
     </section>
 
+    <!-- 참고 안내 -->
     <section class="card">
-      <h2>위험도 분석 기준</h2>
+      <h2>분석 결과 안내</h2>
 
-      <p class="description">
-        위험도 점수는 아래 기준으로 계산합니다.
-        공식 위험등급이 아닌 과제용 자체 지표입니다.
+      <p class="analysis-note">
+        본 분석은 한국도로교통공단에서 제공하는
+        자전거 사고다발지역 데이터를 활용합니다.
       </p>
 
-      <p>
-        사고 건수 × 3<br>
-        사망자 수 × 10<br>
-        중상자 수 × 5<br>
-        경상자 수 × 2<br>
-        부상신고자 수 × 1
+      <p class="analysis-note">
+        위험도 점수는 사고 건수와 사망자,
+        중상자, 경상자, 부상신고자 수를
+        반영한 과제용 자체 분석 지표입니다.
       </p>
 
-      <p class="description">
-        점수가 높을수록 조회된 사고다발지역 가운데
-        상대적으로 위험도가 높다고 평가합니다.
-        자전거 통행량 등을 반영한 실제 사고 발생 확률은 아닙니다.
+      <p class="analysis-note">
+        표시된 사고 건수와 사상자 수는
+        조회된 사고다발지역 기록의 합계입니다.
+        서울 전체에서 발생한 모든 자전거 사고의
+        합계를 의미하지는 않습니다.
       </p>
+
+      <p class="analysis-note">
+        데이터 조회에 실패한 연도나 지역이 있으면
+        일부 사고지역과 통계가 누락될 수 있습니다.
+      </p>
+
+      <div class="actions">
+        <a href="index.html" class="button">
+          사고 지도 보러 가기
+        </a>
+
+        <a href="about.html"
+           class="button button-outline">
+          프로젝트 소개 보기
+        </a>
+      </div>
+
     </section>
 
   </main>
@@ -306,258 +334,8 @@
     모바일프로그래밍 중간고사 프로젝트
   </footer>
 
-  <script>
-
-    // ============================
-    // 반드시 수정해야 하는 부분
-    // ============================
-
-    const GAS_URL =
-      "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
-
-    // ============================
-    // JSONP 데이터 요청
-    // ============================
-
-    let requestNumber = 0;
-
-    function requestJSONP(url) {
-
-      return new Promise(function(resolve, reject) {
-
-        requestNumber++;
-
-        const callbackName =
-          "bicycleCallback" + requestNumber;
-
-        const script = document.createElement("script");
-
-        let finished = false;
-
-        const timer = setTimeout(function() {
-          finish(new Error("요청 시간이 초과됐습니다."));
-        }, 20000);
-
-        function cleanup() {
-          clearTimeout(timer);
-          delete window[callbackName];
-          script.remove();
-        }
-
-        function finish(error, data) {
-          if (finished) return;
-
-          finished = true;
-          cleanup();
-
-          if (error) {
-            reject(error);
-          } else {
-            resolve(data);
-          }
-        }
-
-        window[callbackName] = function(data) {
-          finish(null, data);
-        };
-
-        script.onerror = function() {
-          finish(new Error("GAS 서버 연결에 실패했습니다."));
-        };
-
-        const separator = url.includes("?") ? "&" : "?";
-
-        script.src = url + separator +
-          "callback=" + encodeURIComponent(callbackName);
-
-        document.body.appendChild(script);
-
-      });
-    }
-
-    // ============================
-    // 사고 분석 실행
-    // ============================
-
-    async function analyzeRegion() {
-
-      const result = document.getElementById("result");
-      const ranking = document.getElementById("ranking");
-      const button = document.getElementById("analyzeButton");
-      const stats = document.getElementById("stats");
-
-      if (GAS_URL.includes("여기에_GAS")) {
-        result.textContent =
-          "먼저 코드에 GAS 웹 앱 URL을 입력해 주세요.";
-        return;
-      }
-
-      button.disabled = true;
-      button.textContent = "데이터 분석 중...";
-
-      result.textContent = "공공데이터를 가져오고 있어요.";
-      ranking.replaceChildren();
-      stats.hidden = true;
-
-      const region = document.getElementById("region").value;
-
-      // 현재 테스트: 서울 강남구
-      const sido = "11";
-      const year = "2023";
-
-      const query =
-        "?year=" + encodeURIComponent(year) +
-        "&sido=" + encodeURIComponent(sido) +
-        "&gugun=" + encodeURIComponent(region);
-
-      try {
-
-        const data = await requestJSONP(GAS_URL + query);
-
-        if (!data || !data.success) {
-          throw new Error(
-            data && data.error
-              ? data.error
-              : "API 응답에 문제가 있습니다."
-          );
-        }
-
-        const accidents = Array.isArray(data.accidents)
-          ? data.accidents
-          : [];
-
-        const totalAccidents = accidents.reduce(
-          function(sum, item) {
-            return sum + (Number(item.accidentCount) || 0);
-          }, 0
-        );
-
-        const totalCasualties = accidents.reduce(
-          function(sum, item) {
-            return sum + (Number(item.casualtyCount) || 0);
-          }, 0
-        );
-
-        result.textContent =
-          year + "년 서울 강남구 분석 완료! " +
-          "조회된 사고다발지역은 " +
-          accidents.length + "곳입니다.";
-
-        document.getElementById("spotCount").textContent =
-          accidents.length;
-
-        document.getElementById("accidentCount").textContent =
-          totalAccidents;
-
-        document.getElementById("casualtyCount").textContent =
-          totalCasualties;
-
-        stats.hidden = false;
-
-        displayRanking(accidents);
-
-      } catch (error) {
-
-        result.textContent =
-          "데이터 조회 오류: " + error.message;
-
-        ranking.textContent =
-          "분석 결과를 표시할 수 없습니다.";
-
-        console.error(error);
-
-      } finally {
-
-        button.disabled = false;
-        button.textContent = "사고 위험지역 분석하기";
-
-      }
-    }
-
-    // ============================
-    // 위험지역 TOP 5 출력
-    // ============================
-
-    function displayRanking(accidents) {
-
-      const ranking = document.getElementById("ranking");
-      ranking.replaceChildren();
-
-      if (accidents.length === 0) {
-        const empty = document.createElement("p");
-        empty.className = "empty";
-        empty.textContent =
-          "선택한 조건에 해당하는 사고다발지역이 없습니다.";
-
-        ranking.appendChild(empty);
-        return;
-      }
-
-      const sorted = [...accidents].sort(
-        function(a, b) {
-          return Number(b.riskScore) - Number(a.riskScore);
-        }
-      );
-
-      const topFive = sorted.slice(0, 5);
-
-      const maxScore = Math.max(
-        1,
-        ...topFive.map(function(item) {
-          return Number(item.riskScore) || 0;
-        })
-      );
-
-      topFive.forEach(function(item, index) {
-
-        const row = document.createElement("div");
-        row.className = "ranking-item";
-
-        const title = document.createElement("div");
-        title.className = "ranking-title";
-        title.textContent =
-          (index + 1) + "위. " + item.name;
-
-        const info = document.createElement("div");
-        info.className = "ranking-info";
-
-        info.textContent =
-          "사고 " + item.accidentCount + "건 · " +
-          "사상자 " + item.casualtyCount + "명";
-
-        const score = document.createElement("div");
-        score.className = "score";
-
-        const riskScore = Number(item.riskScore) || 0;
-
-        score.textContent =
-          "위험도 점수: " + riskScore + "점";
-
-        const barBackground =
-          document.createElement("div");
-
-        barBackground.className = "bar-background";
-
-        const bar = document.createElement("div");
-        bar.className = "bar";
-
-        const percent = (riskScore / maxScore) * 100;
-
-        bar.style.width = percent + "%";
-
-        barBackground.appendChild(bar);
-
-        row.appendChild(title);
-        row.appendChild(info);
-        row.appendChild(score);
-        row.appendChild(barBackground);
-
-        ranking.appendChild(row);
-
-      });
-    }
-
-  </script>
+  <!-- 외부 사고 분석 JavaScript -->
+  <script src="js/analysis.js"></script>
 
 </body>
 </html>
