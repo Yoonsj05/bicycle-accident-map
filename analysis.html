@@ -6,183 +6,92 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0">
 
-  <title>사고 분석 | 자전거 사고 위험지역 분석기</title>
+  <title>BIKE SAFE | 사고 분석</title>
 
-  <!-- 공통 CSS -->
   <link rel="stylesheet" href="css/style.css">
-
-  <!-- 분석 페이지 전용 CSS -->
-  <style>
-    .analysis-filter {
-      display: flex;
-      align-items: end;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 20px;
-      padding: 20px;
-      background: #f1f5f9;
-      border-radius: 12px;
-    }
-
-    .analysis-filter .search-field {
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .analysis-summary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 22px;
-    }
-
-    .summary-box {
-      padding: 25px 12px;
-      background: #eef4fb;
-      border-radius: 12px;
-      text-align: center;
-    }
-
-    .summary-number {
-      display: block;
-      margin-bottom: 10px;
-      color: #173b63;
-      font-size: 30px;
-      font-weight: bold;
-      overflow-wrap: anywhere;
-    }
-
-    .summary-label {
-      color: #64748b;
-      font-size: 13px;
-    }
-
-    .analysis-status {
-      margin-top: 18px;
-      padding: 16px;
-      border-radius: 10px;
-      background: #eef4fb;
-      color: #243247;
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .analysis-coverage {
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1.8;
-      margin-top: 16px;
-    }
-
-    .ranking-item {
-      padding: 20px 0;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .ranking-item:last-child {
-      border-bottom: none;
-    }
-
-    .ranking-title {
-      font-size: 16px;
-      font-weight: bold;
-      color: #173b63;
-      line-height: 1.6;
-      overflow-wrap: anywhere;
-    }
-
-    .ranking-info {
-      color: #64748b;
-      font-size: 14px;
-      line-height: 1.7;
-      margin: 10px 0;
-    }
-
-    .bar-background {
-      width: 100%;
-      height: 14px;
-      border-radius: 20px;
-      background: #e5e7eb;
-      overflow: hidden;
-    }
-
-    .bar {
-      height: 100%;
-      width: 0;
-      background: #173b63;
-      border-radius: 20px;
-    }
-
-    .empty {
-      color: #64748b;
-      padding: 30px 15px;
-      text-align: center;
-      line-height: 1.8;
-    }
-
-    .analysis-note {
-      font-size: 13px;
-      color: #64748b;
-      line-height: 1.8;
-    }
-
-    @media (max-width: 760px) {
-      .analysis-filter {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .analysis-filter .search-field {
-        width: 100%;
-        min-width: 0;
-      }
-
-      .analysis-summary {
-        grid-template-columns: 1fr;
-      }
-
-      .summary-number {
-        font-size: 26px;
-      }
-
-      .analysis-filter .button {
-        width: 100%;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="css/pages.css">
 </head>
 
-<body>
+<body class="bike-subpage">
 
-  <!-- 상단 -->
-  <header>
-    <h1>자전거 사고 위험지역 분석기</h1>
-    <p>공공데이터 기반 자전거 교통사고 분석</p>
-  </header>
+  <div class="browser-shell">
 
-  <!-- 3개 페이지 메뉴 -->
-  <nav>
-    <a href="index.html">사고 지도</a>
-    <a href="about.html">프로젝트 소개</a>
-    <a href="analysis.html">사고 분석</a>
-  </nav>
+    <header class="browser-bar">
 
-  <main>
+      <div class="window-controls" aria-hidden="true">
+        <span class="window-dot red"></span>
+        <span class="window-dot yellow"></span>
+        <span class="window-dot green"></span>
+      </div>
 
-    <!-- 지역별 분석 -->
-    <section class="card">
-      <h2>지역별 자전거 사고 분석</h2>
+      <nav class="browser-tabs" aria-label="페이지 메뉴">
 
-      <p class="description">
-        2021년부터 2023년까지의 자전거 사고다발지역
-        자료를 통합하여 사고 현황을 분석합니다.
-      </p>
+        <a href="index.html" class="browser-tab">
+          <span class="tab-icon">🚲</span>
+          사고 지도
+        </a>
 
-      <div class="analysis-filter">
+        <a href="analysis.html"
+           class="browser-tab active"
+           aria-current="page">
+          <span class="tab-icon">▥</span>
+          사고 분석
+        </a>
 
-        <div class="search-field">
+        <a href="about.html" class="browser-tab">
+          <span class="tab-icon">ⓘ</span>
+          프로젝트 소개
+        </a>
+
+      </nav>
+
+      <div class="browser-brand">
+        <div class="brand-logo">
+
+          <svg class="bike-logo-icon"
+               xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 64 64"
+               fill="none"
+               stroke="#17558c"
+               stroke-width="3.8"
+               stroke-linecap="round"
+               stroke-linejoin="round"
+               aria-hidden="true">
+            <circle cx="14" cy="45" r="11"/>
+            <circle cx="51" cy="45" r="11"/>
+            <path d="M14 45 L26 25 L38 45 L14 45"/>
+            <path d="M38 45 L51 45 L40 21 L34 21"/>
+            <path d="M26 25 L23 19 L18 19"/>
+            <path d="M26 25 L40 25"/>
+            <path d="M38 15 L44 15"/>
+          </svg>
+
+          <div class="brand-text">
+            <div class="brand-name">BIKE SAFE</div>
+            <div class="brand-subtitle">
+              서울 자전거 사고 위험지역 분석기
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </header>
+
+    <main class="workspace subpage-workspace">
+
+      <div class="subpage-heading">
+        <div>
+          <span class="subpage-eyebrow">
+            ACCIDENT ANALYTICS
+          </span>
+          <h1>자전거 사고 데이터 분석</h1>
+          <p>서울 · 2021~2023년 통합</p>
+        </div>
+
+        <div class="analysis-filter">
           <label for="analysisDistrict">
-            분석할 지역 선택
+            분석 지역
           </label>
 
           <select id="analysisDistrict">
@@ -213,128 +122,149 @@
             <option value="140">중구</option>
             <option value="260">중랑구</option>
           </select>
+
+          <button id="analyzeButton"
+                  type="button"
+                  class="button">
+            분석하기
+          </button>
         </div>
-
-        <button
-          id="analyzeButton"
-          class="button"
-          onclick="analyzeRegion()">
-          사고 위험지역 분석하기
-        </button>
-
-      </div>
-
-      <div id="analysisStatus"
-           class="analysis-status"
-           role="status">
-        분석 데이터를 준비하고 있어요.
       </div>
 
       <!-- 통계 요약 -->
-      <div id="analysisStats"
-           class="analysis-summary"
-           hidden>
+      <section id="analysisStats"
+               class="analytics-stat-grid"
+               aria-label="사고 분석 요약">
 
-        <div class="summary-box">
-          <span id="analysisSpotCount"
-                class="summary-number">0</span>
-          <span class="summary-label">
-            사고다발지역 수
-          </span>
+        <div class="analytics-stat stat-red">
+          <div class="analytics-stat-top">
+            <span class="analytics-stat-icon">◎</span>
+            <span>사고다발지역 수</span>
+          </div>
+          <strong>
+            <span id="analysisSpotCount">--</span>
+            <small>곳</small>
+          </strong>
         </div>
 
-        <div class="summary-box">
-          <span id="analysisAccidentCount"
-                class="summary-number">0</span>
-          <span class="summary-label">
-            사고 발생 건수 합계
-          </span>
+        <div class="analytics-stat stat-blue">
+          <div class="analytics-stat-top">
+            <span class="analytics-stat-icon">▥</span>
+            <span>사고 건수</span>
+          </div>
+          <strong>
+            <span id="analysisAccidentCount">--</span>
+            <small>건</small>
+          </strong>
         </div>
 
-        <div class="summary-box">
-          <span id="analysisCasualtyCount"
-                class="summary-number">0</span>
-          <span class="summary-label">
-            사상자 수 합계
-          </span>
+        <div class="analytics-stat stat-green">
+          <div class="analytics-stat-top">
+            <span class="analytics-stat-icon">♧</span>
+            <span>사상자 수</span>
+          </div>
+          <strong>
+            <span id="analysisCasualtyCount">--</span>
+            <small>명</small>
+          </strong>
         </div>
+
+      </section>
+
+      <div id="analysisStatus"
+           class="analytics-status"
+           role="status">
+        데이터 조회 준비 중...
+      </div>
+
+      <!-- 분석 그래프 -->
+      <div class="analytics-panels">
+
+        <section class="analytics-panel">
+          <div class="analytics-panel-heading">
+            <h2>주요 위험지역 TOP 5</h2>
+            <span>자체 위험도 점수 기준</span>
+          </div>
+
+          <div id="analysisRanking">
+            <p class="analytics-empty">
+              데이터를 불러오는 중...
+            </p>
+          </div>
+        </section>
+
+        <section class="analytics-panel">
+          <div class="analytics-panel-heading">
+            <h2>연도별 사고 현황</h2>
+            <span>2021~2023</span>
+          </div>
+
+          <div id="yearlyChart"
+               class="yearly-chart">
+            <p class="analytics-empty">
+              데이터를 불러오는 중...
+            </p>
+          </div>
+
+          <div class="chart-legend">
+            <span>
+              <i class="chart-legend-dot blue"></i>
+              사고 건수
+            </span>
+            <span>
+              <i class="chart-legend-dot red"></i>
+              사상자 수
+            </span>
+          </div>
+        </section>
 
       </div>
 
-      <p id="analysisCoverage"
-         class="analysis-coverage">
-        분석된 데이터 범위를 확인하고 있어요.
-      </p>
+      <!-- 추가 통계 -->
+      <section class="analytics-panel analytics-wide">
+        <div class="analytics-panel-heading">
+          <h2>연도별 상세 통계</h2>
+          <span>조회된 사고다발지역 기준</span>
+        </div>
 
-    </section>
+        <div class="table-scroll">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>연도</th>
+                <th>사고 건수</th>
+                <th>사상자 수</th>
+                <th>위험도 점수 합계</th>
+              </tr>
+            </thead>
+            <tbody id="yearlyTableBody">
+              <tr>
+                <td colspan="4">조회 중...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-    <!-- TOP 5 분석 -->
-    <section class="card">
-      <h2>사고 위험지역 TOP 5</h2>
-
-      <p class="description">
-        사고 건수와 인명피해를 바탕으로
-        계산한 자체 위험도 점수가 높은
-        사고다발지역 5곳을 표시합니다.
-      </p>
-
-      <div id="analysisRanking">
-        <p class="empty">
-          데이터 조회 후 위험지역 순위가 표시됩니다.
+        <p id="analysisCoverage"
+           class="analysis-coverage">
+          데이터 범위를 확인하고 있어요.
         </p>
-      </div>
+      </section>
 
-    </section>
-
-    <!-- 참고 안내 -->
-    <section class="card">
-      <h2>분석 결과 안내</h2>
-
-      <p class="analysis-note">
-        본 분석은 한국도로교통공단에서 제공하는
-        자전거 사고다발지역 데이터를 활용합니다.
+      <p class="subpage-note">
+        사고다발지역 자료 기준 ·
+        공식 위험등급 아님 ·
+        실제 전체 사고 통계와 다를 수 있음
       </p>
 
-      <p class="analysis-note">
-        위험도 점수는 사고 건수와 사망자,
-        중상자, 경상자, 부상신고자 수를
-        반영한 과제용 자체 분석 지표입니다.
-      </p>
+    </main>
 
-      <p class="analysis-note">
-        표시된 사고 건수와 사상자 수는
-        조회된 사고다발지역 기록의 합계입니다.
-        서울 전체에서 발생한 모든 자전거 사고의
-        합계를 의미하지는 않습니다.
-      </p>
+    <footer class="app-footer">
+      공공데이터포털 · 한국도로교통공단 · BIKE SAFE
+    </footer>
 
-      <p class="analysis-note">
-        데이터 조회에 실패한 연도나 지역이 있으면
-        일부 사고지역과 통계가 누락될 수 있습니다.
-      </p>
+  </div>
 
-      <div class="actions">
-        <a href="index.html" class="button">
-          사고 지도 보러 가기
-        </a>
-
-        <a href="about.html"
-           class="button button-outline">
-          프로젝트 소개 보기
-        </a>
-      </div>
-
-    </section>
-
-  </main>
-
-  <footer>
-    자료: 한국도로교통공단 자전거 교통사고 다발지역 OpenAPI
-    <br>
-    모바일프로그래밍 중간고사 프로젝트
-  </footer>
-
-  <!-- 외부 사고 분석 JavaScript -->
   <script src="js/analysis.js"></script>
 
 </body>
