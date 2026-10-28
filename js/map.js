@@ -3,17 +3,17 @@
   BIKE SAFE - 서울 자전거 사고 지도
 
   이번 수정:
-  - 지역 선택 시 왼쪽 현황도 해당 자치구로 변경
-  - 지역별 사고 건수, 사상자 수, 사망자 수 표시
-  - 자료 없음 / 조회 중 / 조회 실패 구분
+  - 자료가 없는 자치구도 해당 지역으로 지도 이동
+  - 서울 25개 자치구 대표 좌표 활용
 
   기존 유지:
+  - 지역별 왼쪽 사고 현황
+  - 2021~2023년 선택
   - 분석 기간 21~23년
-  - 연도 메뉴 전체 (2021~2023년)
-  - 지도 마커, 위험도 색상
-  - 서울 전체 위험도 비교 기준
-  - 상세정보 및 패널 열기/닫기
-  - 기존 HTML / CSS
+  - 공공데이터 캐시
+  - 위험도 계산 및 마커 색상
+  - 사고지역 상세정보
+  - 기존 HTML/CSS 디자인
 */
 
 let map = null;
@@ -34,6 +34,47 @@ let renderTimer = null;
 const overlays = new Map();
 
 const $ = id => document.getElementById(id);
+
+// ========================================
+// 1. 서울 자치구 대표 좌표
+// ========================================
+
+// 사고 좌표가 아닌 지도 이동용 대표 위치
+// [위도, 경도]
+
+const DISTRICT_CENTERS = {
+  "종로구": [37.5729, 126.9794],
+  "중구": [37.5641, 126.9979],
+  "용산구": [37.5311, 126.9814],
+  "성동구": [37.5509, 127.0407],
+  "광진구": [37.5388, 127.0827],
+  "동대문구": [37.5744, 127.0395],
+  "중랑구": [37.6065, 127.0927],
+  "성북구": [37.6109, 127.0273],
+  "강북구": [37.6396, 127.0257],
+  "도봉구": [37.6688, 127.0471],
+  "노원구": [37.6550, 127.0778],
+  "은평구": [37.6027, 126.9288],
+  "서대문구": [37.5794, 126.9368],
+  "마포구": [37.5662, 126.9018],
+  "양천구": [37.5271, 126.8561],
+  "강서구": [37.5509, 126.8497],
+  "구로구": [37.4954, 126.8581],
+  "금천구": [37.4574, 126.8956],
+  "영등포구": [37.5265, 126.8962],
+  "동작구": [37.4979, 126.9828],
+  "관악구": [37.4654, 126.9436],
+  "서초구": [37.4761, 127.0376],
+  "강남구": [37.5184, 127.0473],
+  "송파구": [37.5048, 127.1147],
+  "강동구": [37.5499, 127.1465]
+};
+
+const SEOUL_CENTER = [37.5665, 126.9780];
+
+// ========================================
+// 2. 기본 함수
+// ========================================
 
 function num(value) {
   const n = Number(value);
@@ -60,7 +101,10 @@ function makeElement(tag, className = "", text) {
 
 function setText(id, value) {
   const element = $(id);
-  if (element) element.textContent = value;
+
+  if (element) {
+    element.textContent = value;
+  }
 }
 
 function selectedDistrict() {
@@ -68,7 +112,9 @@ function selectedDistrict() {
 }
 
 function districtName(code = selectedDistrict()) {
-  if (code === "all") return "서울 전체";
+  if (code === "all") {
+    return "서울 전체";
+  }
 
   const option = Array.from(
     $("district")?.options || []
@@ -86,6 +132,10 @@ function yearLabel() {
 
   return selectedYear + "년";
 }
+
+// ========================================
+// 3. 데이터 선택
+// ========================================
 
 function filteredYearItems() {
   if (!snapshot) return [];
@@ -107,12 +157,13 @@ function visibleGroups() {
   }
 
   return groups.filter(
-    item => String(item.districtCode) === district
+    item =>
+      String(item.districtCode) === district
   );
 }
 
 // ========================================
-// 선택한 연도 + 자치구 조회 상태
+// 4. 조회 상태
 // ========================================
 
 function getProgress(district = selectedDistrict()) {
@@ -163,7 +214,8 @@ function getProgress(district = selectedDistrict()) {
 
   const total = yearCount * districtCount;
 
-  const completed = success + nodata + failed;
+  const completed =
+    success + nodata + failed;
 
   return {
     total,
@@ -177,7 +229,54 @@ function getProgress(district = selectedDistrict()) {
 }
 
 // ========================================
-// 패널 열기 / 닫기
+// 5. 지도 이동 함수
+// ========================================
+
+function focusDistrict() {
+  if (!map) return;
+
+  const district = selectedDistrict();
+
+  if (district === "all") {
+    map.setCenter(
+      new kakao.maps.LatLng(
+        SEOUL_CENTER[0],
+        SEOUL_CENTER[1]
+      )
+    );
+
+    map.setLevel(9);
+    return;
+  }
+
+  // 자치구 이름으로 대표 좌표 찾기
+  const name = districtName();
+
+  const center = DISTRICT_CENTERS[name];
+
+  if (!center) {
+    console.warn(
+      "자치구 대표 좌표를 찾을 수 없습니다:",
+      name
+    );
+
+    return;
+  }
+
+  // 데이터가 없어도 해당 자치구로 이동
+  map.setCenter(
+    new kakao.maps.LatLng(
+      center[0],
+      center[1]
+    )
+  );
+
+  // 자치구를 보기 적당한 확대 수준
+  map.setLevel(6);
+}
+
+// ========================================
+// 6. 패널 열기 / 닫기
 // ========================================
 
 function resizeMap() {
@@ -216,8 +315,6 @@ function closeDetailPanel() {
 }
 
 function showSeoulOverview() {
-  // 함수 이름은 기존 HTML과의 연결을 위해 유지.
-  // 실제 화면은 현재 선택한 자치구 현황을 표시.
   panelMode = "overview";
   selectedKey = null;
 
@@ -231,7 +328,7 @@ window.closeDetailPanel = closeDetailPanel;
 window.showSeoulOverview = showSeoulOverview;
 
 // ========================================
-// 통계 화면 구성 요소
+// 7. 공통 화면 요소
 // ========================================
 
 function createOverviewCard(label, value) {
@@ -263,23 +360,15 @@ function createDetailRow(label, value) {
   );
 
   row.append(
-    makeElement(
-      "span",
-      "detail-label",
-      label
-    ),
-    makeElement(
-      "span",
-      "detail-value",
-      value
-    )
+    makeElement("span", "detail-label", label),
+    makeElement("span", "detail-value", value)
   );
 
   return row;
 }
 
 // ========================================
-// 연도 선택
+// 8. 연도 선택
 // ========================================
 
 function createYearSelector() {
@@ -297,6 +386,7 @@ function createYearSelector() {
   );
 
   label.htmlFor = "bikeOverviewYear";
+
   label.style.display = "block";
   label.style.marginBottom = "9px";
   label.style.fontSize = "12px";
@@ -315,7 +405,6 @@ function createYearSelector() {
   select.style.color = "#193e65";
   select.style.cursor = "pointer";
 
-  // 기존 메뉴 문구 변경하지 않음
   const years = [
     ["all", "전체 (2021~2023년)"],
     ["2021", "2021년"],
@@ -325,8 +414,10 @@ function createYearSelector() {
 
   years.forEach(([value, text]) => {
     const option = document.createElement("option");
+
     option.value = value;
     option.textContent = text;
+
     select.appendChild(option);
   });
 
@@ -346,7 +437,7 @@ function createYearSelector() {
 }
 
 // ========================================
-// 서울 전체 위험도 기준
+// 9. 위험도 기준
 // ========================================
 
 function updateRiskReference() {
@@ -356,8 +447,8 @@ function updateRiskReference() {
     return;
   }
 
-  // 자치구 선택과 관계없이 서울 전체 데이터 기준
-  const calculated = risk.createRiskReference(groups);
+  const calculated =
+    risk.createRiskReference(groups);
 
   const progress = getProgress("all");
 
@@ -400,7 +491,7 @@ function updateRiskReference() {
 }
 
 // ========================================
-// 위험도 범례
+// 10. 지도 위험도 범례
 // ========================================
 
 function updateLegend() {
@@ -423,7 +514,7 @@ function updateLegend() {
   ).forEach((segment, index) => {
     const span = segment.querySelector("span");
 
-    if (span) {
+    if (span && labels[index]) {
       span.textContent = labels[index];
     }
   });
@@ -449,7 +540,7 @@ function updateLegend() {
 }
 
 // ========================================
-// 자료 없음 / 조회 중 안내
+// 11. 자료 없음 안내
 // ========================================
 
 function renderEmptyState(target, progress) {
@@ -472,25 +563,28 @@ function renderEmptyState(target, progress) {
     description =
       `${area}의 ${yearLabel()} 자료를 ` +
       "확인하고 있어요.";
+
   } else if (progress.failed > 0) {
     heading = "사고 데이터를 불러오지 못했습니다.";
 
     description =
       "공공데이터 API 요청에 실패했습니다. " +
       "잠시 후 다시 접속해 주세요.";
+
   } else if (progress.nodata > 0) {
     heading = "조회된 사고다발지역 자료가 없습니다.";
 
     description =
       `${area}의 선택 기간에 해당하는 ` +
       "사고다발지역 자료가 제공되지 않았습니다. " +
-      "실제 사고가 0건이라는 의미는 아닙니다.";
+      "사고가 0건이라는 의미는 아닙니다.";
+
   } else {
     heading = "조회된 사고지역이 없습니다.";
 
     description =
-      `${area}의 선택 기간에 해당하는 ` +
-      "사고다발지역 기록이 확인되지 않았습니다.";
+      `${area}의 사고다발지역 기록이 ` +
+      "확인되지 않았습니다.";
   }
 
   const title = makeElement(
@@ -518,7 +612,7 @@ function renderEmptyState(target, progress) {
 }
 
 // ========================================
-// 왼쪽 사고 현황 패널
+// 12. 지역별 왼쪽 사고 현황
 // ========================================
 
 function renderOverview() {
@@ -540,7 +634,6 @@ function renderOverview() {
 
   target.replaceChildren();
 
-  // 선택한 자치구 데이터만 통계에 사용
   const displayed = visibleGroups();
   const progress = getProgress();
 
@@ -556,8 +649,8 @@ function renderOverview() {
       : (
         `${area}의 자전거 교통사고 ` +
         "다발지역 공공데이터를 분석합니다. " +
-        "연도를 변경하면 선택한 지역의 " +
-        "해당 연도 현황을 확인할 수 있습니다."
+        "연도 변경 시 해당 기간의 " +
+        "현황을 확인할 수 있습니다."
       );
 
   target.appendChild(
@@ -568,10 +661,8 @@ function renderOverview() {
     )
   );
 
-  // 연도 선택 기능은 그대로 유지
   target.appendChild(createYearSelector());
 
-  // 자료 없음 / 조회 중 / 오류 안내
   if (displayed.length === 0) {
     renderEmptyState(target, progress);
   } else {
@@ -668,7 +759,6 @@ function renderOverview() {
     }
   }
 
-  // 조회 결과 상태
   const progressText = progress.finished
     ? (
       `조회 완료 ${progress.completed}/${progress.total}건` +
@@ -715,10 +805,13 @@ function renderOverview() {
 }
 
 // ========================================
-// 개별 사고지역 상세정보
+// 13. 사고지역 상세정보
 // ========================================
 
-function showAccidentDetail(item, resetScroll = true) {
+function showAccidentDetail(
+  item,
+  resetScroll = true
+) {
   panelMode = "detail";
   selectedKey = item.key;
 
@@ -741,6 +834,7 @@ function showAccidentDetail(item, resetScroll = true) {
   );
 
   backButton.type = "button";
+
   backButton.addEventListener(
     "click",
     showSeoulOverview
@@ -905,7 +999,7 @@ function showAccidentDetail(item, resetScroll = true) {
 }
 
 // ========================================
-// 지도 마커
+// 14. 지도 마커 생성
 // ========================================
 
 function createMarker(item) {
@@ -974,6 +1068,10 @@ function createMarker(item) {
   return markerState;
 }
 
+// ========================================
+// 15. 지도 마커 및 이동 처리
+// ========================================
+
 function renderMap(fitBounds = false) {
   if (!map) return;
 
@@ -1022,7 +1120,11 @@ function renderMap(fitBounds = false) {
     const current = overlays.get(item.key);
 
     if (!current) {
-      overlays.set(item.key, createMarker(item));
+      overlays.set(
+        item.key,
+        createMarker(item)
+      );
+
       continue;
     }
 
@@ -1034,10 +1136,12 @@ function renderMap(fitBounds = false) {
     ) {
       current.latitude = latitude;
       current.longitude = longitude;
+
       current.overlay.setPosition(position);
     }
 
-    const className = "risk-marker " + level;
+    const className =
+      "risk-marker " + level;
 
     if (current.button.className !== className) {
       current.button.className = className;
@@ -1049,6 +1153,7 @@ function renderMap(fitBounds = false) {
 
     if (current.button.title !== title) {
       current.button.title = title;
+
       current.button.setAttribute(
         "aria-label",
         title
@@ -1056,6 +1161,7 @@ function renderMap(fitBounds = false) {
     }
   }
 
+  // 선택 지역에 해당하지 않는 마커 제거
   for (const [key, marker] of overlays) {
     if (!keys.has(key)) {
       marker.overlay.setMap(null);
@@ -1063,11 +1169,27 @@ function renderMap(fitBounds = false) {
     }
   }
 
-  if (fitBounds && validCount > 0) {
-    if (validCount === 1) {
-      map.setCenter(firstPosition);
-      map.setLevel(5);
-    } else {
+  // ======================================
+  // 핵심 수정: 데이터 유무와 관계없이 이동
+  // ======================================
+
+  if (fitBounds) {
+    if (selectedDistrict() === "all") {
+      // 서울 전체로 돌아갈 때
+      if (validCount > 1) {
+        map.setBounds(
+          bounds,
+          50,
+          50,
+          70,
+          50
+        );
+      } else {
+        focusDistrict();
+      }
+
+    } else if (validCount > 1) {
+      // 사고지역이 2곳 이상이면 마커 범위
       map.setBounds(
         bounds,
         50,
@@ -1075,10 +1197,23 @@ function renderMap(fitBounds = false) {
         70,
         50
       );
+
+    } else if (validCount === 1) {
+      // 사고지역이 1곳이면 마커 중심
+      map.setCenter(firstPosition);
+      map.setLevel(5);
+
+    } else {
+      // 사고지역이 0곳이어도
+      // 반드시 해당 자치구로 이동
+      focusDistrict();
     }
   }
 
-  setText("spotCount", fmt(visible.length));
+  setText(
+    "spotCount",
+    fmt(visible.length)
+  );
 
   setText(
     "accidentCount",
@@ -1109,20 +1244,19 @@ function renderMap(fitBounds = false) {
 }
 
 // ========================================
-// 자치구 변경
+// 16. 자치구 선택
 // ========================================
 
 function applyFilter() {
   if (!map || !snapshot) return;
 
-  // 핵심 수정:
-  // 지역을 바꾸면 왼쪽 현황도 새 지역으로 변경
   selectedKey = null;
 
   if (panelMode !== "closed") {
     panelMode = "overview";
   }
 
+  // 지역별 지도와 왼쪽 현황 함께 갱신
   renderAll(true);
 
   if (panelMode === "overview") {
@@ -1139,7 +1273,7 @@ window.applyFilter = applyFilter;
 window.resetFilter = resetFilter;
 
 // ========================================
-// 전체 화면 갱신
+// 17. 화면 전체 갱신
 // ========================================
 
 function renderAll(forceFit = false) {
@@ -1147,8 +1281,7 @@ function renderAll(forceFit = false) {
 
   const items = filteredYearItems();
 
-  // 서울 전체 그룹을 먼저 계산:
-  // 자치구를 바꿔도 위험도 기준이 흔들리지 않음
+  // 서울 전체 그룹으로 위험도 기준 유지
   groups = risk.groupRiskAccidents(items);
 
   updateRiskReference();
@@ -1165,6 +1298,7 @@ function renderAll(forceFit = false) {
 
   if (panelMode === "overview") {
     renderOverview();
+
   } else if (panelMode === "detail") {
     const item = groups.find(
       group => group.key === selectedKey
@@ -1185,6 +1319,7 @@ function renderAll(forceFit = false) {
   }
 
   const progress = getProgress();
+
   const area = districtName();
 
   const status = progress.finished
@@ -1196,14 +1331,14 @@ function renderAll(forceFit = false) {
     : (
       `${area} · ${yearLabel()} 조회 중 ` +
       `${progress.completed}/${progress.total}건` +
-      " · 저장된 자료부터 표시"
+      " · 저장된 데이터부터 표시"
     );
 
   setText("status", status);
 }
 
 // ========================================
-// 데이터 변경 시 화면 갱신
+// 18. 데이터 변경 시 화면 갱신
 // ========================================
 
 function scheduleRender(next) {
@@ -1226,7 +1361,7 @@ function scheduleRender(next) {
 }
 
 // ========================================
-// 지도 시작
+// 19. 지도 시작
 // ========================================
 
 window.addEventListener("load", async () => {
@@ -1247,6 +1382,7 @@ window.addEventListener("load", async () => {
       "BIKE SAFE 필수 요소 누락:",
       missing
     );
+
     return;
   }
 
@@ -1255,6 +1391,7 @@ window.addEventListener("load", async () => {
       "detailContent",
       "카카오맵 SDK를 불러오지 못했습니다."
     );
+
     return;
   }
 
@@ -1267,8 +1404,8 @@ window.addEventListener("load", async () => {
       $("map"),
       {
         center: new kakao.maps.LatLng(
-          37.5665,
-          126.9780
+          SEOUL_CENTER[0],
+          SEOUL_CENTER[1]
         ),
         level: 9
       }
