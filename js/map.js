@@ -2,7 +2,7 @@
 /*
   BIKE SAFE - 서울 자전거 사고 지도
 
-  새 기능:
+  기능:
   - 서울 전체 사고 현황에서 연도 선택
   - 전체 / 2021 / 2022 / 2023
   - 연도에 따라 통계와 지도 마커 변경
@@ -16,6 +16,9 @@
   - 패널 열기/닫기
   - 서울 전체 현황 복귀 버튼
   - 위험도별 색상
+
+  이번 수정:
+  - 분석 기간 표시만 "21~23년"으로 변경
 */
 
 // ========================================
@@ -85,7 +88,7 @@ function districtName(code) {
 
 function yearLabel() {
   if (selectedYear === "all") {
-    return "21~23년";;
+    return "21~23년";
   }
 
   return selectedYear + "년";
@@ -223,7 +226,6 @@ function createYearSelector() {
     "bike-year-selector"
   );
 
-  // 기존 CSS와 어울리는 스타일
   container.style.marginBottom = "18px";
 
   const label = makeElement(
@@ -274,11 +276,9 @@ function createYearSelector() {
   select.addEventListener("change", event => {
     selectedYear = event.target.value;
 
-    // 연도가 바뀌면 기존 마커와 상세정보 갱신
     selectedKey = null;
     panelMode = "overview";
 
-    // 선택한 연도의 데이터로 지도와 통계 갱신
     renderAll(true);
   });
 
@@ -302,11 +302,8 @@ function updateRiskReference() {
     risk.createRiskReference(groups);
 
   if (selectedYear !== "all") {
-    // 해당 연도의 서울 전체 사고지역 기준
     reference = calculated;
 
-    // 요청이 모두 완료됐더라도
-    // 빠진 자료가 있을 수 있으므로 구분
     const missing = snapshot.failed.some(
       job => job.year === selectedYear
     );
@@ -316,11 +313,9 @@ function updateRiskReference() {
 
     partial = missing || pending > 0;
 
-    // 연도별 기준은 기존 3개년 캐시를 덮어쓰지 않음
     return;
   }
 
-  // 기존 3개년 공통 위험도 기준 유지
   const saved = risk.readRiskReference();
 
   const complete =
@@ -420,7 +415,6 @@ function renderOverview() {
     )
   );
 
-  // 새 연도 선택 기능
   target.appendChild(createYearSelector());
 
   const sum = field =>
@@ -544,7 +538,11 @@ function renderOverview() {
           : selectedYear + "년 사고지역 기준"
       ) +
       "으로 위험도를 비교합니다. " +
-      (partial ? "일부 자료가 조회 중이거나 누락될 수 있습니다. " : "") +
+      (
+        partial
+          ? "일부 자료가 조회 중이거나 누락될 수 있습니다. "
+          : ""
+      ) +
       "위험등급은 BIKE SAFE의 자체 상대적 분류입니다."
     )
   );
@@ -778,7 +776,6 @@ function createMarker(item) {
   );
 
   button.addEventListener("click", () => {
-    // 최신 데이터 사용
     showAccidentDetail(markerState.item);
 
     requestAnimationFrame(() => {
@@ -854,7 +851,6 @@ function renderMap(fitBounds = false) {
     );
 
     if (current) {
-      // 데이터는 항상 최신 값으로 교체
       current.item = item;
 
       const moved =
@@ -891,7 +887,6 @@ function renderMap(fitBounds = false) {
     }
   }
 
-  // 연도 또는 자치구 변경 시 불필요한 마커 제거
   for (const [key, marker] of overlays) {
     if (!keys.has(key)) {
       marker.overlay.setMap(null);
@@ -961,10 +956,8 @@ window.resetFilter = resetFilter;
 function renderAll(forceFit = false) {
   if (!snapshot || !risk || !map) return;
 
-  // 선택한 연도에 맞는 사고 기록
   const items = filteredYearItems();
 
-  // 선택한 연도의 서울 전체 데이터 병합
   groups = risk.groupRiskAccidents(items);
 
   updateRiskReference();
@@ -1054,7 +1047,6 @@ window.addEventListener("load", async () => {
 
     snapshot = shared.getSnapshot();
 
-    // 기존과 동일하게 서울 전체 패널 기본 표시
     panelMode = "overview";
 
     $("mapLayout").classList.add("active");
@@ -1069,7 +1061,6 @@ window.addEventListener("load", async () => {
     resizeMap();
     renderAll();
 
-    // 캐시 및 새 API 데이터 자동 갱신
     shared.subscribe(next => {
       snapshot = next;
 
