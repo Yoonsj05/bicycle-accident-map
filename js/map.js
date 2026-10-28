@@ -85,7 +85,7 @@ function districtName(code) {
 
 function yearLabel() {
   if (selectedYear === "all") {
-    return "2021~2023년";
+    return "21~23년";;
   }
 
   return selectedYear + "년";
