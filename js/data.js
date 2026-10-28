@@ -1,13 +1,20 @@
 
 /*
-  BIKE SAFE 공통 데이터 관리자
+  BIKE SAFE - 공통 데이터 관리자
 
-  지도와 분석 페이지가 같은 캐시를 사용합니다.
-  성공한 데이터는 7일 동안 보관합니다.
-  NODATA_ERROR는 24시간 동안 보관합니다.
-  일시적인 실패는 5분 뒤 다시 시도합니다.
+  역할:
+  1. 2021~2023년 서울 25개 자치구 데이터 조회
+  2. Google Apps Script(JSONP) 호출
+  3. 지도와 사고 분석 페이지의 캐시 공유
+  4. 성공 / 자료 없음 / 요청 실패 구분
+  5. 실패 시 최대 2회 재시도
 
-  HTML/CSS 수정 불필요
+  이번 점검:
+  - 캐시된 요청 실패를 자료 없음으로 잘못 처리하던 문제 수정
+  - GAS URL 설정 여부 검사
+  - 요청 상태 및 오류 처리 정리
+
+  HTML / CSS / 지도 디자인 변경 없음
 */
 
 import {
@@ -16,42 +23,52 @@ import {
 } from "./risk.js";
 
 // ========================================
-// 1. 여기 한 곳만 수정!
+// 1. GAS 웹 앱 주소
 // ========================================
 
-// 기존 map.js에서 사용하던 GAS /exec 주소
+// 기존에 사용하던 GAS 배포 URL을 입력하세요.
+// 반드시 /exec로 끝나는 주소여야 합니다.
+
 const GAS_URL = 
   "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
 
 // ========================================
-// 2. 공통 설정
+// 2. 캐시 설정
 // ========================================
 
+// 기존 저장 데이터와 호환되는 이름
 const DATA_PREFIX = "bicycle_v3_";
-const NODATA_PREFIX = "bike_safe_nodata_v1_";
+
+const NO_DATA_PREFIX = "bike_safe_nodata_v1_";
 const FAILURE_PREFIX = "bike_safe_failed_v1_";
 
+// 성공한 데이터: 7일
 const DATA_AGE = 7 * 24 * 60 * 60 * 1000;
-const NODATA_AGE = 24 * 60 * 60 * 1000;
+
+// 자료 없음: 24시간
+const NO_DATA_AGE = 24 * 60 * 60 * 1000;
+
+// 요청 실패: 5분간 재시도 제한
 const FAILURE_COOLDOWN = 5 * 60 * 1000;
 
-const REQUEST_TIMEOUT = 30000;
+// API 요청 설정
+const TIMEOUT = 30000;
 const MAX_RETRIES = 2;
-const CONCURRENT_REQUESTS = 2;
+const CONCURRENCY = 2;
 
 // ========================================
-// 3. 전체 요청 목록
+// 3. 조회 작업 목록
 // ========================================
 
 const jobs = RISK_YEARS.flatMap(year =>
   RISK_DISTRICTS.map(district => ({
-    year: String(year),
-    district: String(district)
+    year,
+    district
   }))
 );
 
 // ========================================
-// 4. 현재 데이터 상태
+// 4. 공통 상태
 // ========================================
 
 const state = {
@@ -59,10 +76,8 @@ const state = {
   success: [],
   nodata: [],
   failed: [],
-
   completed: 0,
   total: jobs.length,
-
   loading: false,
   finished: false
 };
@@ -80,16 +95,26 @@ function jobKey(job) {
   return `${job.year}|${job.district}`;
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+function dataKey(job) {
+  return (
+    DATA_PREFIX +
+    job.year +
+    "_" +
+    job.district
+  );
 }
 
 function readStorage(key) {
   try {
-    const text = localStorage.getItem(key);
+    const value = localStorage.getItem(key);
 
-    return text ? JSON.parse(text) : null;
-  } catch {
+    return value ? JSON.parse(value) : null;
+  } catch (error) {
+    console.warn(
+      "BIKE SAFE 캐시 읽기 실패:",
+      error
+    );
+
     return null;
   }
 }
@@ -108,62 +133,87 @@ function writeStorage(key, value) {
   }
 }
 
-// ========================================
-// 6. 캐시 읽기
-// ========================================
+function removeStorage(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn(
+      "BIKE SAFE 캐시 삭제 실패:",
+      error
+    );
+  }
+}
 
-function readCache(job) {
-  const dataKey =
-    DATA_PREFIX + job.year + "_" + job.district;
-
-  const saved = readStorage(dataKey);
-
+function isFresh(record, maxAge) {
   if (
-    saved &&
-    Array.isArray(saved.items) &&
-    Number.isFinite(saved.savedAt) &&
-    Date.now() - saved.savedAt < DATA_AGE
+    !record ||
+    !Number.isFinite(record.savedAt)
+  ) {
+    return false;
+  }
+
+  const age = Date.now() - record.savedAt;
+
+  return age >= 0 && age < maxAge;
+}
+
+function delay(ms) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
+
+// ========================================
+// 6. 캐시 확인
+// ========================================
+
+function cacheFor(job) {
+  const saved = readStorage(dataKey(job));
+
+  // 기존 정상 데이터 재사용
+  if (
+    isFresh(saved, DATA_AGE) &&
+    Array.isArray(saved.items)
   ) {
     return {
       status: "success",
-
       items: saved.items.map(item => ({
         ...item,
-        year: job.year,
-        districtCode: job.district
+        year: String(job.year),
+        districtCode: String(job.district)
       }))
     };
   }
 
+  // API가 명시적으로 자료 없음 응답
   const noData = readStorage(
-    NODATA_PREFIX + jobKey(job)
+    NO_DATA_PREFIX + jobKey(job)
   );
 
-  if (
-    noData &&
-    Number.isFinite(noData.savedAt) &&
-    Date.now() - noData.savedAt < NODATA_AGE
-  ) {
+  if (isFresh(noData, NO_DATA_AGE)) {
     return {
       status: "nodata",
       items: []
     };
   }
 
+  // 이전에 요청 실패한 경우
   const failure = readStorage(
     FAILURE_PREFIX + jobKey(job)
   );
 
   if (
-    failure &&
-    Number.isFinite(failure.savedAt) &&
-    Date.now() - failure.savedAt <
+    isFresh(
+      failure,
       FAILURE_COOLDOWN
+    )
   ) {
     return {
       status: "failed",
       items: [],
-      reason: failure.reason || "최근 요청 실패"
+      reason:
+        failure.reason ||
+        "최근 API 요청 실패"
     };
   }
 
@@ -171,7 +221,7 @@ function readCache(job) {
 }
 
 // ========================================
-// 7. 페이지에 데이터 상태 전달
+// 7. 상태 공유
 // ========================================
 
 export function getSnapshot() {
@@ -184,56 +234,95 @@ export function getSnapshot() {
   };
 }
 
+function emit() {
+  const snapshot = getSnapshot();
+
+  for (const listener of listeners) {
+    try {
+      listener(snapshot);
+    } catch (error) {
+      console.error(
+        "BIKE SAFE 화면 갱신 오류:",
+        error
+      );
+    }
+  }
+}
+
 export function subscribe(listener) {
+  if (typeof listener !== "function") {
+    throw new TypeError(
+      "subscribe에는 함수가 필요합니다."
+    );
+  }
+
   listeners.add(listener);
 
+  // 현재 상태 즉시 전달
   listener(getSnapshot());
 
+  // 구독 해제 함수
   return () => {
     listeners.delete(listener);
   };
 }
 
-function emit() {
-  const snapshot = getSnapshot();
+// ========================================
+// 8. GAS 주소 검사
+// ========================================
 
-  for (const listener of listeners) {
-    listener(snapshot);
+function isValidGasUrl() {
+  try {
+    const url = new URL(GAS_URL);
+
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "script.google.com" &&
+      /^\/macros\/s\/[^/]+\/exec\/?$/.test(
+        url.pathname
+      )
+    );
+  } catch (error) {
+    return false;
   }
 }
 
 // ========================================
-// 8. GAS JSONP 통신
+// 9. JSONP API 요청
 // ========================================
 
-function requestJSONP(url) {
+function jsonp(url) {
   return new Promise((resolve, reject) => {
     const callback =
-      "bikeSafeShared_" + (++requestNumber);
+      "bikeSafeShared_" +
+      (++requestNumber);
 
     const script =
       document.createElement("script");
 
-    let finished = false;
+    let settled = false;
 
     const timer = setTimeout(() => {
       finish(new Error("TIMEOUT"));
-    }, REQUEST_TIMEOUT);
+    }, TIMEOUT);
 
     function finish(error, data) {
-      if (finished) return;
+      if (settled) return;
 
-      finished = true;
+      settled = true;
 
       clearTimeout(timer);
       script.remove();
 
       if (error) {
-        // 응답이 늦게 도착하는 경우 대비
-        window[callback] = function() {};
+        // 늦게 실행된 JSONP 응답으로
+        // 오류가 발생하지 않도록 보호
+        window[callback] = () => {};
+
         reject(error);
       } else {
         delete window[callback];
+
         resolve(data);
       }
     }
@@ -243,12 +332,18 @@ function requestJSONP(url) {
     };
 
     script.onerror = () => {
-      finish(new Error("NETWORK_ERROR"));
+      finish(
+        new Error("NETWORK_ERROR")
+      );
     };
+
+    const separator = url.includes("?")
+      ? "&"
+      : "?";
 
     script.src =
       url +
-      (url.includes("?") ? "&" : "?") +
+      separator +
       "callback=" +
       encodeURIComponent(callback);
 
@@ -257,35 +352,54 @@ function requestJSONP(url) {
 }
 
 // ========================================
-// 9. 사고 데이터 요청
+// 10. 실제 데이터 요청
 // ========================================
 
-async function fetchJob(job) {
+async function request(job) {
+  const separator = GAS_URL.includes("?")
+    ? "&"
+    : "?";
+
   const url =
     GAS_URL +
-    "?year=" + encodeURIComponent(job.year) +
+    separator +
+    "year=" +
+    encodeURIComponent(job.year) +
     "&sido=11" +
-    "&gugun=" + encodeURIComponent(job.district);
+    "&gugun=" +
+    encodeURIComponent(job.district);
 
-  const response = await requestJSONP(url);
+  const result = await jsonp(url);
 
+  // 정상 응답
   if (
-    response &&
-    response.success === true &&
-    Array.isArray(response.accidents)
+    result &&
+    result.success === true &&
+    Array.isArray(result.accidents)
   ) {
-    const items = response.accidents.map(item => ({
-      ...item,
-      year: job.year,
-      districtCode: job.district
-    }));
+    const items = result.accidents.map(
+      item => ({
+        ...item,
+        year: String(job.year),
+        districtCode: String(job.district)
+      })
+    );
 
     writeStorage(
-      DATA_PREFIX + job.year + "_" + job.district,
+      dataKey(job),
       {
         savedAt: Date.now(),
         items
       }
+    );
+
+    // 과거 실패 상태는 더 이상 필요 없음
+    removeStorage(
+      FAILURE_PREFIX + jobKey(job)
+    );
+
+    removeStorage(
+      NO_DATA_PREFIX + jobKey(job)
     );
 
     return {
@@ -294,19 +408,26 @@ async function fetchJob(job) {
     };
   }
 
+  // GAS에서 반환한 오류 메시지
   const message = String(
-    response?.error ||
-    response?.message ||
+    result?.error ||
+    result?.message ||
     "INVALID_RESPONSE"
   );
 
-  // 공공데이터에 조회 자료가 없는 경우
-  if (/NODATA_ERROR|NO_DATA/i.test(message)) {
+  // 공공데이터 API의 자료 없음 응답
+  if (
+    /NODATA_ERROR|NO_DATA/i.test(message)
+  ) {
     writeStorage(
-      NODATA_PREFIX + jobKey(job),
+      NO_DATA_PREFIX + jobKey(job),
       {
         savedAt: Date.now()
       }
+    );
+
+    removeStorage(
+      FAILURE_PREFIX + jobKey(job)
     );
 
     return {
@@ -315,14 +436,15 @@ async function fetchJob(job) {
     };
   }
 
+  // 나머지 오류는 요청 실패
   throw new Error(message);
 }
 
 // ========================================
-// 10. 일시적인 실패 재시도
+// 11. 실패 시 재시도
 // ========================================
 
-async function fetchWithRetry(job) {
+async function retry(job) {
   let lastError = null;
 
   for (
@@ -332,19 +454,19 @@ async function fetchWithRetry(job) {
   ) {
     try {
       if (attempt > 0) {
-        await sleep(attempt * 1000);
+        await delay(attempt * 1000);
       }
 
-      return await fetchJob(job);
-
+      return await request(job);
     } catch (error) {
       lastError = error;
 
       const message = String(
-        error.message || ""
+        error?.message || error
       );
 
-      // 인증키 오류 등은 반복 호출하지 않음
+      // 인증 및 응답 형식 오류는
+      // 반복 호출해도 해결되지 않음
       if (
         /SERVICE_KEY|INVALID_RESPONSE|403|401/i
           .test(message)
@@ -354,9 +476,9 @@ async function fetchWithRetry(job) {
     }
   }
 
-  const reason = lastError
-    ? lastError.message
-    : "UNKNOWN_ERROR";
+  const reason =
+    lastError?.message ||
+    "UNKNOWN_ERROR";
 
   writeStorage(
     FAILURE_PREFIX + jobKey(job),
@@ -374,21 +496,24 @@ async function fetchWithRetry(job) {
 }
 
 // ========================================
-// 11. 요청 결과 반영
+// 12. 조회 결과 반영
 // ========================================
 
-function acceptResult(job, result) {
+function accept(job, result) {
   if (result.status === "success") {
     state.success.push(job);
-    state.items.push(...result.items);
 
+    state.items.push(
+      ...result.items
+    );
   } else if (result.status === "nodata") {
     state.nodata.push(job);
-
   } else {
     state.failed.push({
       ...job,
-      reason: result.reason || "UNKNOWN_ERROR"
+      reason:
+        result.reason ||
+        "요청 실패"
     });
   }
 
@@ -398,100 +523,136 @@ function acceptResult(job, result) {
 }
 
 // ========================================
-// 12. 전체 데이터 불러오기
+// 13. 전체 데이터 조회 시작
 // ========================================
 
 export function startLoading() {
-  // 같은 페이지에서 중복 실행 방지
+  // 중복 실행 방지
   if (started) return;
 
   started = true;
+
   state.loading = true;
 
   const missing = [];
 
-  // 저장된 데이터를 먼저 읽어서 즉시 표시
+  // 기존 캐시부터 확인
   for (const job of jobs) {
-    const cached = readCache(job);
+    const cached = cacheFor(job);
 
-    if (cached) {
-      if (cached.status === "success") {
-        state.success.push(job);
-        state.items.push(...cached.items);
-
-      } else if (cached.status === "nodata") {
-        state.nodata.push(job);
-
-      } else {
-        state.failed.push({
-          ...job,
-          reason: cached.reason || "최근 요청 실패"
-        });
-      }
-
-      state.completed++;
-
-    } else {
+    if (!cached) {
       missing.push(job);
+      continue;
     }
-  }
 
-  state.loading = missing.length > 0;
-  state.finished = missing.length === 0;
+    // 성공 캐시
+    if (cached.status === "success") {
+      state.success.push(job);
 
-  emit();
+      state.items.push(
+        ...cached.items
+      );
+    }
 
-  // 전부 저장되어 있으면 API를 다시 부르지 않음
-  if (missing.length === 0) return;
+    // 자료 없음 캐시
+    else if (cached.status === "nodata") {
+      state.nodata.push(job);
+    }
 
-  // GAS 주소가 입력되지 않은 경우
-  if (
-    !GAS_URL.startsWith(
-      "https://script.google.com/macros/s/"
-    ) ||
-    !GAS_URL.endsWith("/exec")
-  ) {
-    for (const job of missing) {
-      acceptResult(job, {
-        status: "failed",
-        reason: "GAS URL 미설정"
+    // 실패 캐시
+    // 핵심 수정: 자료 없음으로 처리하지 않음
+    else if (cached.status === "failed") {
+      state.failed.push({
+        ...job,
+        reason:
+          cached.reason ||
+          "최근 요청 실패"
       });
     }
 
+    state.completed++;
+  }
+
+  // 캐시만으로 모두 조회된 경우
+  if (missing.length === 0) {
     state.loading = false;
     state.finished = true;
+
     emit();
 
     return;
   }
 
+  // 캐시된 데이터 먼저 화면에 표시
+  state.loading = true;
+  state.finished = false;
+
+  emit();
+
+  // GAS 주소 확인
+  if (!isValidGasUrl()) {
+    for (const job of missing) {
+      accept(job, {
+        status: "failed",
+        items: [],
+        reason: "GAS URL 미설정 또는 형식 오류"
+      });
+    }
+
+    state.loading = false;
+    state.finished = true;
+
+    emit();
+
+    console.error(
+      "BIKE SAFE: data.js의 GAS_URL을 확인하세요."
+    );
+
+    return;
+  }
+
+  // ======================================
+  // API 요청 작업자
+  // ======================================
+
   let cursor = 0;
 
-  // 동시에 최대 2개 요청
   async function worker() {
     while (cursor < missing.length) {
       const job = missing[cursor++];
 
-      const result = await fetchWithRetry(job);
+      let result;
 
-      acceptResult(job, result);
+      try {
+        result = await retry(job);
+      } catch (error) {
+        result = {
+          status: "failed",
+          items: [],
+          reason:
+            error?.message ||
+            "UNKNOWN_ERROR"
+        };
+      }
+
+      accept(job, result);
     }
   }
 
-  Promise.all(
-    Array.from(
-      {
-        length: Math.min(
-          CONCURRENT_REQUESTS,
-          missing.length
-        )
-      },
-      () => worker()
-    )
-  )
+  const workerCount = Math.min(
+    CONCURRENCY,
+    missing.length
+  );
+
+  const workers = Array.from(
+    { length: workerCount },
+    () => worker()
+  );
+
+  Promise.all(workers)
     .catch(error => {
       console.error(
-        "BIKE SAFE 공통 API 오류:",
+        "BIKE SAFE 공통 요청 오류:",
         error
       );
     })
@@ -501,14 +662,14 @@ export function startLoading() {
 
       emit();
 
-      console.info("BIKE SAFE 데이터 조회 결과", {
-        success: state.success.length,
-        noData: state.nodata.length,
-        failed: state.failed.length
-      });
-
-      if (state.failed.length > 0) {
-        console.table(state.failed);
-      }
+      console.info(
+        "BIKE SAFE 데이터 조회 완료",
+        {
+          total: state.total,
+          success: state.success.length,
+          nodata: state.nodata.length,
+          failed: state.failed.length
+        }
+      );
     });
 }
