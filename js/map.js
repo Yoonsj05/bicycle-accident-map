@@ -1,108 +1,48 @@
 
 /*
-  BIKE SAFE - 서울 자전거 교통사고 위험지도
+  BIKE SAFE 사고 지도
 
-  개선 사항
-  1. 서울 전체 자전거 사고 현황 기본 표시
-  2. 개별 상세정보에서 서울 전체 현황으로 바로 복귀
-  3. 위험도 점수에 따른 상세 카드 색상 적용
-  4. 자전거 사고 관련 명칭 명확히 표시
-  5. 조회 성공 자료부터 실시간 갱신
-  6. NODATA_ERROR와 통신 실패 구분
-  7. 패널 개폐 시 카카오맵 크기 재계산
+  기존 HTML/CSS 디자인 유지
+  공통 데이터 관리자(data.js) 사용
+
+  기능:
+  - 서울 전체 자전거 사고 현황
+  - 개별 사고지역 상세정보
+  - 패널 열기/닫기
+  - 자치구 필터
+  - 위험도별 마커
+  - 저장된 데이터 즉시 표시
 */
 
-// =========================================
-// 1. 설정
-// =========================================
+// ========================================
+// 1. 상태와 기본 함수
+// ========================================
 
-// 기존 Google Apps Script 배포 URL로 변경
-const GAS_URL = 
-  "https://script.google.com/macros/s/AKfycbwo75CLBCXVNfJ9R55fC9VYeFpiOjhbJ02w3WRXi2qnSuQ_ug8OAthWHC63pnJE819MTQ/exec";
+let map;
+let risk;
+let snapshot;
 
-const MAP_CENTER = {
-  lat: 37.5665,
-  lng: 126.9780
-};
+let groups = [];
+let reference = null;
+let partial = true;
 
-const REQUEST_TIMEOUT = 30000;
-const MAX_RETRIES = 2;
-const CACHE_DURATION = 60 * 60 * 1000;
-const CONCURRENT_REQUESTS = 2;
-const UPDATE_DELAY = 350;
-
-// =========================================
-// 2. 상태
-// =========================================
-
-let map = null;
-let riskTools = null;
-let riskReference = null;
-
-let allAccidents = [];
-let groupedAccidents = [];
-
-let failedRequests = [];
-let noDataRequests = [];
-
-let completedRequests = 0;
-let totalRequests = 75;
-let requestCounter = 0;
-
-let isLoading = false;
-let isComplete = false;
-let referenceIsPartial = true;
-
-let markers = [];
-let refreshTimer = null;
-let hasFittedMap = false;
-
-// overview / detail / closed
+let selectedKey = null;
 let panelMode = "overview";
-let selectedAccidentKey = null;
 
-const completedJobKeys = new Set();
+let fitOnce = false;
+let renderTimer = null;
 
-const mapElement =
-  document.getElementById("map");
+const overlays = new Map();
 
-const mapLayout =
-  document.getElementById("mapLayout");
+const $ = id => document.getElementById(id);
 
-const detailPanel =
-  document.getElementById("detailPanel");
-
-const detailContent =
-  document.getElementById("detailContent");
-
-const districtSelect =
-  document.getElementById("district");
-
-const statusBox =
-  document.getElementById("status");
-
-// 기존 HTML의 onclick, onchange에 사용
-window.applyFilter = applyFilter;
-window.resetFilter = resetFilter;
-window.closeDetailPanel = closeDetailPanel;
-window.showSeoulOverview = showSeoulOverview;
-
-// =========================================
-// 3. 기본 함수
-// =========================================
-
-function num(value) {
+const numeric = value => {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
-}
+};
 
-function fmt(value) {
-  return num(value).toLocaleString("ko-KR");
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const fmt = value =>
+  numeric(value).toLocaleString("ko-KR");
 
 function makeElement(tag, className = "", text) {
   const element = document.createElement(tag);
@@ -118,73 +58,31 @@ function makeElement(tag, className = "", text) {
   return element;
 }
 
-function setText(id, text) {
-  const element = document.getElementById(id);
-  if (element) element.textContent = text;
-}
+const panel = () => $("detailPanel");
+const content = () => $("detailContent");
+const districtSelect = () => $("district");
 
-function getPanelTitle() {
-  return (
-    document.getElementById("detailTitle") ||
-    detailPanel?.querySelector(".panel-title")
-  );
-}
-
-function setPanelTitle(text) {
-  const element = getPanelTitle();
+function setText(id, value) {
+  const element = $(id);
 
   if (element) {
-    element.textContent = text;
+    element.textContent = value;
   }
 }
 
 function districtName(code) {
-  if (code === "all") return "서울 전체";
-
   const option = Array.from(
-    districtSelect.options
+    districtSelect().options
   ).find(item => item.value === code);
 
   return option ? option.textContent : code;
 }
 
-function isNoData(message) {
-  return /NODATA_ERROR|NO_DATA/i.test(
-    String(message || "")
-  );
-}
+// ========================================
+// 2. 패널 열기/닫기
+// ========================================
 
-// =========================================
-// 4. 패널 열기 및 닫기
-// =========================================
-
-function getOpenButton() {
-  let button =
-    document.getElementById("openOverviewButton");
-
-  if (button) return button;
-
-  // 기존 HTML에 버튼이 없는 경우 자동 생성
-  button = makeElement(
-    "button",
-    "open-overview-button",
-    "▤ 서울 전체 현황"
-  );
-
-  button.type = "button";
-  button.id = "openOverviewButton";
-
-  button.addEventListener(
-    "click",
-    showSeoulOverview
-  );
-
-  mapLayout.appendChild(button);
-
-  return button;
-}
-
-function relayoutMap() {
+function resizeMap() {
   if (!map) return;
 
   requestAnimationFrame(() => {
@@ -193,52 +91,52 @@ function relayoutMap() {
 }
 
 function openPanel() {
-  if (!mapLayout) return;
+  $("mapLayout").classList.add("active");
 
-  mapLayout.classList.add("active");
+  const button = $("openOverviewButton");
 
-  const button = getOpenButton();
-  button.hidden = true;
+  if (button) {
+    button.hidden = true;
+  }
 
-  relayoutMap();
+  resizeMap();
 }
 
 function closeDetailPanel() {
   panelMode = "closed";
-  selectedAccidentKey = null;
+  selectedKey = null;
 
-  mapLayout.classList.remove("active");
+  $("mapLayout").classList.remove("active");
 
-  const button = getOpenButton();
-  button.hidden = false;
+  const button = $("openOverviewButton");
 
-  relayoutMap();
+  if (button) {
+    button.hidden = false;
+  }
+
+  resizeMap();
 }
 
-// =========================================
-// 5. 통계 카드 생성
-// =========================================
+function showSeoulOverview() {
+  panelMode = "overview";
+  selectedKey = null;
 
-function makeOverviewCard(label, value) {
-  const card = makeElement("div", "overview-card");
+  renderOverview();
+  openPanel();
 
-  card.append(
-    makeElement(
-      "span",
-      "overview-label",
-      label
-    ),
-    makeElement(
-      "strong",
-      "overview-number",
-      value
-    )
-  );
-
-  return card;
+  if (panel()) {
+    panel().scrollTop = 0;
+  }
 }
 
-function makeDetailRow(label, value) {
+window.closeDetailPanel = closeDetailPanel;
+window.showSeoulOverview = showSeoulOverview;
+
+// ========================================
+// 3. 화면 요소 생성
+// ========================================
+
+function createDetailRow(label, value) {
   const row = makeElement("div", "detail-row");
 
   row.append(
@@ -249,80 +147,164 @@ function makeDetailRow(label, value) {
   return row;
 }
 
-// =========================================
-// 6. 서울 전체 자전거 사고 현황
-// =========================================
+function createOverviewCard(label, value) {
+  const card = makeElement("div", "overview-card");
 
-function renderSeoulOverview() {
-  if (panelMode !== "overview") return;
-
-  setPanelTitle("서울 전체 자전거 사고 현황");
-
-  detailContent.replaceChildren();
-
-  const intro = makeElement(
-    "p",
-    "overview-lead",
-    "2021~2023년 서울특별시의 자전거 " +
-    "교통사고 다발지역 공공데이터를 분석한 " +
-    "결과입니다. 사고지역과 인명피해 현황을 " +
-    "확인할 수 있으며, 조회 중에도 결과가 " +
-    "자동으로 갱신됩니다."
+  card.append(
+    makeElement("span", "overview-label", label),
+    makeElement("strong", "overview-number", value)
   );
 
-  detailContent.appendChild(intro);
+  return card;
+}
 
-  const totalSpots = groupedAccidents.length;
+// ========================================
+// 4. 위험도 기준
+// ========================================
 
-  const totalAccidents =
-    groupedAccidents.reduce(
-      (sum, item) => sum + num(item.accidentCount),
-      0
-    );
+function updateRiskReference() {
+  const calculated = groups.length
+    ? risk.createRiskReference(groups)
+    : null;
 
-  const totalCasualties =
-    groupedAccidents.reduce(
-      (sum, item) => sum + num(item.casualtyCount),
-      0
-    );
+  const saved = risk.readRiskReference();
 
-  const totalDeaths =
-    groupedAccidents.reduce(
-      (sum, item) => sum + num(item.deathCount),
-      0
-    );
+  // 모든 요청이 성공한 경우에만
+  // 새로운 서울 전체 기준 저장
+  const fullyKnown =
+    snapshot.finished &&
+    snapshot.failed.length === 0 &&
+    snapshot.nodata.length === 0;
 
-  detailContent.appendChild(
-    makeOverviewCard(
-      "자전거 교통사고 다발지역",
-      fmt(totalSpots) + "곳"
+  if (fullyKnown && calculated) {
+    reference = calculated;
+    partial = false;
+
+    if (
+      !saved ||
+      saved.p50 !== calculated.p50 ||
+      saved.p80 !== calculated.p80
+    ) {
+      risk.saveRiskReference(calculated);
+    }
+
+  } else {
+    reference = saved || calculated;
+    partial = !saved;
+  }
+}
+
+function updateLegend() {
+  const legend = document.querySelector(
+    ".risk-legend-bar"
+  );
+
+  if (!legend || !risk) return;
+
+  const ranges = risk.getRiskRanges(reference);
+
+  const labels = [
+    "주의 · " + ranges.low,
+    "높음 · " + ranges.medium,
+    "매우 높음 · " + ranges.high
+  ];
+
+  const segments = legend.querySelectorAll(
+    ".legend-segment"
+  );
+
+  segments.forEach((segment, index) => {
+    const label = segment.querySelector("span");
+
+    if (label) {
+      label.textContent = labels[index];
+    }
+  });
+
+  const caption = legend.querySelector(
+    ".legend-heading span"
+  );
+
+  if (caption) {
+    caption.textContent = partial
+      ? "조회된 자료 임시 기준"
+      : "서울 전체 백분위 기준";
+  }
+}
+
+// ========================================
+// 5. 서울 전체 자전거 사고 현황
+// ========================================
+
+function renderOverview() {
+  if (panelMode !== "overview") return;
+
+  setText(
+    "detailTitle",
+    "서울 전체 자전거 사고 현황"
+  );
+
+  const target = content();
+
+  if (!target || !snapshot) return;
+
+  const scroll = panel().scrollTop;
+
+  target.replaceChildren();
+
+  target.appendChild(
+    makeElement(
+      "p",
+      "overview-lead",
+      "2021~2023년 서울 자전거 교통사고 " +
+      "다발지역 공공데이터를 분석한 결과입니다. " +
+      "조회된 지역의 사고 및 인명피해 현황을 " +
+      "보여줍니다."
     )
   );
 
-  const grid = makeElement("div", "overview-grid");
+  const sum = field => {
+    return groups.reduce(
+      (total, item) =>
+        total + numeric(item[field]),
+      0
+    );
+  };
+
+  target.appendChild(
+    createOverviewCard(
+      "자전거 교통사고 다발지역",
+      fmt(groups.length) + "곳"
+    )
+  );
+
+  const grid = makeElement(
+    "div",
+    "overview-grid"
+  );
 
   grid.append(
-    makeOverviewCard(
+    createOverviewCard(
       "자전거 사고 건수",
-      fmt(totalAccidents) + "건"
+      fmt(sum("accidentCount")) + "건"
     ),
-    makeOverviewCard(
+    createOverviewCard(
       "사상자 수",
-      fmt(totalCasualties) + "명"
+      fmt(sum("casualtyCount")) + "명"
     ),
-    makeOverviewCard(
+    createOverviewCard(
       "사망자 수",
-      fmt(totalDeaths) + "명"
+      fmt(sum("deathCount")) + "명"
     ),
-    makeOverviewCard(
+    createOverviewCard(
       "분석 기간",
       "3개년"
     )
   );
 
-  detailContent.appendChild(grid);
+  target.appendChild(grid);
 
-  detailContent.appendChild(
+  target.appendChild(
     makeElement(
       "h3",
       "overview-section-title",
@@ -330,135 +312,124 @@ function renderSeoulOverview() {
     )
   );
 
-  const counts = {
-    low: 0,
-    medium: 0,
-    high: 0,
-    unknown: 0
-  };
-
-  groupedAccidents.forEach(item => {
-    const level = riskReference
-      ? riskTools.getRiskLevel(
-          item.riskScore,
-          riskReference
-        )
-      : "unknown";
-
-    counts[level] = (counts[level] || 0) + 1;
-  });
-
-  [
+  const levels = [
     ["low", "주의"],
     ["medium", "높음"],
     ["high", "매우 높음"]
-  ].forEach(([level, label]) => {
+  ];
+
+  for (const [level, name] of levels) {
     const row = makeElement(
       "div",
       "overview-risk-row"
     );
 
-    const name = makeElement(
+    const label = makeElement(
       "span",
       "overview-risk-name"
     );
 
-    name.append(
+    label.append(
       makeElement(
         "span",
         "overview-dot " + level
       ),
-      makeElement("span", "", label)
+      makeElement("span", "", name)
     );
 
+    const count = groups.filter(item => {
+      return risk.getRiskLevel(
+        item.riskScore,
+        reference
+      ) === level;
+    }).length;
+
     row.append(
-      name,
+      label,
       makeElement(
         "strong",
         "",
-        fmt(counts[level]) + "곳"
+        fmt(count) + "곳"
       )
     );
 
-    detailContent.appendChild(row);
-  });
-
-  const progress = makeElement(
-    "p",
-    "overview-progress"
-  );
-
-  if (!isComplete) {
-    progress.textContent =
-      `조회 진행 ${completedRequests}/${totalRequests}건\n` +
-      "확인된 자전거 사고지역부터 반영 중";
-  } else {
-    progress.textContent =
-      `조회 처리 완료 ${completedRequests}/${totalRequests}건\n` +
-      `자료 없음 ${noDataRequests.length}건 · ` +
-      `요청 실패 ${failedRequests.length}건`;
+    target.appendChild(row);
   }
 
-  progress.style.whiteSpace = "pre-line";
+  const progress = snapshot.finished
+    ? (
+      `조회 처리 완료 ` +
+      `${snapshot.completed}/${snapshot.total}건\n` +
+      `자료 없음 ${snapshot.nodata.length}건 · ` +
+      `실제 실패 ${snapshot.failed.length}건`
+    )
+    : (
+      `조회 진행 ` +
+      `${snapshot.completed}/${snapshot.total}건\n` +
+      "저장된 자료를 즉시 표시하고, " +
+      "부족한 자료만 확인 중"
+    );
 
-  detailContent.appendChild(progress);
-
-  detailContent.appendChild(
+  target.appendChild(
     makeElement(
       "p",
-      "year-note",
-      referenceIsPartial
-        ? "위험도는 현재 확인된 자전거 사고지역의 " +
-          "임시 상대 비교 기준입니다. " +
-          "공식 위험등급은 아닙니다."
-        : "서울 전체 자전거 사고다발지역의 " +
-          "점수 분포를 기준으로 분류합니다. " +
-          "공식 위험등급은 아닙니다."
+      "overview-progress",
+      progress
     )
   );
 
-  if (noDataRequests.length > 0 ||
-      failedRequests.length > 0) {
-    detailContent.appendChild(
+  target.appendChild(
+    makeElement(
+      "p",
+      "year-note",
+      partial
+        ? "현재 확보한 자료로 계산한 임시 상대 " +
+          "위험도이며 공식 등급이 아닙니다."
+        : "서울 전체 사고다발지역 점수 기준의 " +
+          "자체 상대 위험도입니다."
+    )
+  );
+
+  if (
+    snapshot.nodata.length ||
+    snapshot.failed.length
+  ) {
+    target.appendChild(
       makeElement(
         "p",
         "year-note",
-        "일부 연도·자치구에서 조회된 자료가 " +
-        "없거나 요청이 실패했습니다. " +
-        "표시된 통계는 확인된 기록의 합계입니다."
+        "자료 없음 또는 실패가 있는 " +
+        "연도·자치구의 기록은 통계 합계에서 " +
+        "빠져 있을 수 있습니다."
       )
     );
   }
+
+  panel().scrollTop = scroll;
 }
 
-function showSeoulOverview() {
-  panelMode = "overview";
-  selectedAccidentKey = null;
-
-  renderSeoulOverview();
-  openPanel();
-
-  if (detailPanel) {
-    detailPanel.scrollTop = 0;
-  }
-}
-
-// =========================================
-// 7. 개별 사고지역 상세정보
-// =========================================
+// ========================================
+// 6. 사고지역 상세정보
+// ========================================
 
 function showAccidentDetail(
   item,
   resetScroll = true
 ) {
   panelMode = "detail";
-  selectedAccidentKey = item.key;
+  selectedKey = item.key;
 
-  setPanelTitle("자전거 사고지역 상세정보");
+  setText(
+    "detailTitle",
+    "자전거 사고지역 상세정보"
+  );
 
-  detailContent.replaceChildren();
+  const target = content();
+  const oldScroll = panel().scrollTop;
 
-  // 새로 추가한 서울 전체 복귀 버튼
+  target.replaceChildren();
+
+  // 서울 전체 현황으로 복귀
   const backButton = makeElement(
     "button",
     "detail-back-button",
@@ -466,15 +437,10 @@ function showAccidentDetail(
   );
 
   backButton.type = "button";
+  backButton.onclick = showSeoulOverview;
 
-  backButton.addEventListener(
-    "click",
-    showSeoulOverview
-  );
-
-  detailContent.appendChild(backButton);
-
-  detailContent.appendChild(
+  target.append(
+    backButton,
     makeElement(
       "h3",
       "region-name",
@@ -482,27 +448,29 @@ function showAccidentDetail(
     )
   );
 
-  [
-    ["자전거 사고 건수", item.accidentCount, "건"],
-    ["사상자 수", item.casualtyCount, "명"],
-    ["사망자 수", item.deathCount, "명"],
-    ["중상자 수", item.seriousCount, "명"],
-    ["경상자 수", item.minorCount, "명"],
+  const fields = [
+    ["자전거 사고 건수", "accidentCount", "건"],
+    ["사상자 수", "casualtyCount", "명"],
+    ["사망자 수", "deathCount", "명"],
+    ["중상자 수", "seriousCount", "명"],
+    ["경상자 수", "minorCount", "명"],
     [
       "부상신고자 수",
-      item.reportedInjuryCount,
+      "reportedInjuryCount",
       "명"
     ]
-  ].forEach(([label, value, unit]) => {
-    detailContent.appendChild(
-      makeDetailRow(
-        label,
-        fmt(value) + unit
+  ];
+
+  for (const [name, field, unit] of fields) {
+    target.appendChild(
+      createDetailRow(
+        name,
+        fmt(item[field]) + unit
       )
     );
-  });
+  }
 
-  detailContent.appendChild(
+  target.appendChild(
     makeElement(
       "h4",
       "year-heading",
@@ -510,55 +478,53 @@ function showAccidentDetail(
     )
   );
 
-  const table = makeElement("table", "year-table");
+  // 연도별 사고 표
+  const table = makeElement(
+    "table",
+    "year-table"
+  );
+
   const thead = document.createElement("thead");
-  const headRow = document.createElement("tr");
+  const header = document.createElement("tr");
 
   ["연도", "사고", "사상자"].forEach(text => {
-    headRow.appendChild(
+    header.appendChild(
       makeElement("th", "", text)
     );
   });
 
-  thead.appendChild(headRow);
+  thead.appendChild(header);
   table.appendChild(thead);
 
   const tbody = document.createElement("tbody");
 
-  for (const year of riskTools.RISK_YEARS) {
+  for (const year of risk.RISK_YEARS) {
     const record = item.records[year];
 
-    const key = year + "|" + item.districtCode;
+    const matches = job =>
+      job.year === year &&
+      job.district === item.districtCode;
 
-    const failed = failedRequests.some(
-      job => job.year === year &&
-        job.district === item.districtCode
-    );
+    const pending =
+      !snapshot.success.some(matches) &&
+      !snapshot.nodata.some(matches) &&
+      !snapshot.failed.some(matches);
 
-    const noData = noDataRequests.some(
-      job => job.year === year &&
-        job.district === item.districtCode
-    );
+    const status = pending
+      ? "조회 중"
+      : snapshot.failed.some(matches)
+        ? "조회 실패"
+        : snapshot.nodata.some(matches)
+          ? "자료 없음"
+          : "기록 없음";
 
-    const pending = !completedJobKeys.has(key);
-
-    let values;
-
-    if (record) {
-      values = [
-        year,
-        fmt(record.accidentCount) + "건",
-        fmt(record.casualtyCount) + "명"
-      ];
-    } else if (pending) {
-      values = [year, "조회 중", "-"];
-    } else if (failed) {
-      values = [year, "조회 실패", "-"];
-    } else if (noData) {
-      values = [year, "자료 없음", "-"];
-    } else {
-      values = [year, "기록 없음", "-"];
-    }
+    const values = record
+      ? [
+          year,
+          fmt(record.accidentCount) + "건",
+          fmt(record.casualtyCount) + "명"
+        ]
+      : [year, status, "-"];
 
     const tr = document.createElement("tr");
 
@@ -572,19 +538,12 @@ function showAccidentDetail(
   }
 
   table.appendChild(tbody);
-  detailContent.appendChild(table);
+  target.appendChild(table);
 
-  // 실제 위험도에 맞춰 카드 색상 변경
-  const level = riskReference
-    ? riskTools.getRiskLevel(
-        item.riskScore,
-        riskReference
-      )
-    : "unknown";
-
-  const label = riskTools.getRiskLabel(
+  // 위험도에 맞는 노랑/주황/빨강 카드
+  const level = risk.getRiskLevel(
     item.riskScore,
-    riskReference
+    reference
   );
 
   const scoreBox = makeElement(
@@ -596,7 +555,10 @@ function showAccidentDetail(
     makeElement(
       "div",
       "score-risk-label",
-      label + " · 자전거 사고 상대적 위험도"
+      risk.getRiskLabel(
+        item.riskScore,
+        reference
+      ) + " · 자전거 사고 상대적 위험도"
     ),
     makeElement(
       "strong",
@@ -605,722 +567,380 @@ function showAccidentDetail(
     )
   );
 
-  detailContent.appendChild(scoreBox);
+  target.appendChild(scoreBox);
 
-  detailContent.appendChild(
+  target.appendChild(
     makeElement(
       "p",
       "score-caption",
-      referenceIsPartial
+      partial
         ? "조회된 자료 기준 임시 상대 위험도 · " +
           "공식 위험등급 아님"
-        : "서울 전체 자전거 사고다발지역 기준 · " +
-          "공식 위험등급 아님"
+        : "서울 전체 자전거 사고다발지역 " +
+          "비교 기준 · 공식 위험등급 아님"
     )
   );
 
-  detailContent.appendChild(
+  target.appendChild(
     makeElement(
       "p",
       "year-note",
-      "기록 없음은 사고가 실제로 0건이었다는 " +
-      "의미가 아니라, 해당 연도에 이 장소의 " +
-      "사고다발지역 기록이 조회되지 않았다는 뜻입니다."
+      "기록 없음은 실제 사고 0건이 아니라 " +
+      "해당 연도에 이 장소의 사고다발지역 " +
+      "기록이 조회되지 않았음을 의미합니다."
     )
   );
 
   openPanel();
 
-  if (resetScroll && detailPanel) {
-    detailPanel.scrollTop = 0;
-  }
+  panel().scrollTop = resetScroll
+    ? 0
+    : oldScroll;
 }
 
-// =========================================
-// 8. 캐시
-// =========================================
+// ========================================
+// 7. 지도 마커
+// ========================================
 
-function cacheKey(year, district) {
-  return `bicycle_v3_${year}_${district}`;
-}
-
-function readCache(year, district) {
-  try {
-    const raw = localStorage.getItem(
-      cacheKey(year, district)
-    );
-
-    if (!raw) return null;
-
-    const saved = JSON.parse(raw);
-
-    if (
-      !saved ||
-      !Array.isArray(saved.items) ||
-      !Number.isFinite(saved.savedAt) ||
-      Date.now() - saved.savedAt > CACHE_DURATION
-    ) {
-      return null;
-    }
-
-    return saved.items;
-  } catch {
-    return null;
-  }
-}
-
-function saveCache(year, district, items) {
-  try {
-    localStorage.setItem(
-      cacheKey(year, district),
-      JSON.stringify({
-        savedAt: Date.now(),
-        items
-      })
-    );
-  } catch (error) {
-    console.warn("사고 데이터 캐시 저장 생략", error);
-  }
-}
-
-// =========================================
-// 9. GAS JSONP 통신
-// =========================================
-
-function requestJSONP(url) {
-  return new Promise((resolve, reject) => {
-    const callback =
-      "bikeSafeMap_" + (++requestCounter);
-
-    const script = document.createElement("script");
-    let finished = false;
-
-    const timer = setTimeout(() => {
-      finish(new Error("TIMEOUT"));
-    }, REQUEST_TIMEOUT);
-
-    function finish(error, data) {
-      if (finished) return;
-      finished = true;
-
-      clearTimeout(timer);
-      script.remove();
-
-      if (error) {
-        // 지연 응답으로 발생하는 콜백 오류 방지
-        window[callback] = function() {};
-        reject(error);
-      } else {
-        delete window[callback];
-        resolve(data);
-      }
-    }
-
-    window[callback] = data => {
-      finish(null, data);
-    };
-
-    script.onerror = () => {
-      finish(new Error("NETWORK_ERROR"));
-    };
-
-    script.src =
-      url +
-      (url.includes("?") ? "&" : "?") +
-      "callback=" +
-      encodeURIComponent(callback);
-
-    document.body.appendChild(script);
-  });
-}
-
-// =========================================
-// 10. 개별 데이터 조회
-// =========================================
-
-async function fetchAccidents(year, district) {
-  const cached = readCache(year, district);
-
-  if (cached !== null) {
-    return {
-      status: "success",
-      items: cached
-    };
-  }
-
-  const url =
-    GAS_URL +
-    "?year=" + encodeURIComponent(year) +
-    "&sido=11" +
-    "&gugun=" + encodeURIComponent(district);
-
-  const result = await requestJSONP(url);
-
-  if (result && result.success === true) {
-    if (!Array.isArray(result.accidents)) {
-      throw new Error("INVALID_DATA_FORMAT");
-    }
-
-    const items = result.accidents.map(item => ({
-      ...item,
-      year: String(year),
-      districtCode: String(district)
-    }));
-
-    saveCache(year, district, items);
-
-    return {
-      status: "success",
-      items
-    };
-  }
-
-  const message = String(
-    result && (result.error || result.message)
-      ? result.error || result.message
-      : "API_RESPONSE_ERROR"
-  );
-
-  if (isNoData(message)) {
-    return {
-      status: "nodata",
-      items: []
-    };
-  }
-
-  throw new Error(message);
-}
-
-async function fetchWithRetry(year, district) {
-  let lastError = null;
-
-  for (
-    let attempt = 0;
-    attempt <= MAX_RETRIES;
-    attempt++
-  ) {
-    try {
-      if (attempt > 0) {
-        await sleep(
-          attempt * 900 + Math.random() * 300
-        );
-      }
-
-      return await fetchAccidents(year, district);
-    } catch (error) {
-      lastError = error;
-
-      if (isNoData(error.message)) {
-        return {
-          status: "nodata",
-          items: []
-        };
-      }
-
-      if (
-        /SERVICE_KEY|INVALID_DATA_FORMAT|403|401/i
-          .test(String(error.message))
-      ) {
-        break;
-      }
-
-      console.warn(
-        `[자전거 사고 API] ${year}년 ` +
-        `${districtName(district)} 조회 실패:`,
-        error.message
-      );
-    }
-  }
-
-  return {
-    status: "failed",
-    items: [],
-    reason: lastError
-      ? lastError.message
-      : "UNKNOWN_ERROR"
-  };
-}
-
-// =========================================
-// 11. 서울 전체 위험도 기준
-// =========================================
-
-function updateRiskReference() {
-  groupedAccidents =
-    riskTools.groupRiskAccidents(allAccidents);
-
-  if (!groupedAccidents.length) {
-    riskReference =
-      riskTools.readRiskReference();
-
-    referenceIsPartial = !riskReference;
-    updateLegend();
-    return;
-  }
-
-  const calculated =
-    riskTools.createRiskReference(
-      groupedAccidents
-    );
-
-  if (
-    isComplete &&
-    failedRequests.length === 0
-  ) {
-    riskReference = calculated;
-    referenceIsPartial = false;
-
-    // 정상 완료된 기준만 공유 캐시에 저장
-    riskTools.saveRiskReference(riskReference);
-  } else {
-    const saved = riskTools.readRiskReference();
-
-    riskReference = saved || calculated;
-    referenceIsPartial = !saved;
-  }
-
-  updateLegend();
-}
-
-function updateLegend() {
-  const legend = document.querySelector(
-    ".risk-legend-bar"
-  );
-
-  if (!legend || !riskTools) return;
-
-  const ranges = riskTools.getRiskRanges(
-    riskReference
-  );
-
-  const labels = [
-    "주의 · " + ranges.low,
-    "높음 · " + ranges.medium,
-    "매우 높음 · " + ranges.high
-  ];
-
-  legend.querySelectorAll(
-    ".legend-segment"
-  ).forEach((segment, index) => {
-    const span = segment.querySelector("span");
-
-    if (span) {
-      span.textContent = labels[index];
-    }
-  });
-
-  const subtitle = legend.querySelector(
-    ".legend-heading span"
-  );
-
-  if (subtitle) {
-    subtitle.textContent = referenceIsPartial
-      ? "확인된 자료의 임시 기준"
-      : "서울 전체 백분위 기준";
-  }
-}
-
-// =========================================
-// 12. 카카오맵 마커
-// =========================================
-
-function clearMarkers() {
-  markers.forEach(marker => marker.setMap(null));
-  markers = [];
-}
-
-function getFilteredGroups() {
-  const district = districtSelect.value;
+function visibleGroups() {
+  const district = districtSelect().value;
 
   return district === "all"
-    ? groupedAccidents
-    : groupedAccidents.filter(
+    ? groups
+    : groups.filter(
         item => item.districtCode === district
       );
 }
 
-function displayMarkers(fitBounds = false) {
-  if (!map || !riskTools) return;
+function createMarker(item) {
+  const position = new kakao.maps.LatLng(
+    item.latitude,
+    item.longitude
+  );
 
-  clearMarkers();
+  const level = risk.getRiskLevel(
+    item.riskScore,
+    reference
+  );
 
-  const items = getFilteredGroups();
+  const button = makeElement(
+    "button",
+    "risk-marker " + level
+  );
+
+  button.type = "button";
+
+  button.title =
+    `${item.name} · ${fmt(item.riskScore)}점`;
+
+  button.setAttribute(
+    "aria-label",
+    button.title
+  );
+
+  button.addEventListener("click", () => {
+    showAccidentDetail(item);
+
+    requestAnimationFrame(() => {
+      map.relayout();
+      map.panTo(position);
+    });
+  });
+
+  const overlay = new kakao.maps.CustomOverlay({
+    position,
+    content: button,
+    yAnchor: 0.5,
+    zIndex: 3
+  });
+
+  overlay.setMap(map);
+
+  return {
+    overlay,
+    button,
+    level,
+    score: item.riskScore
+  };
+}
+
+function renderMap(fitBounds = false) {
+  const visible = visibleGroups();
+
+  const visibleKeys = new Set();
+
   const bounds = new kakao.maps.LatLngBounds();
 
-  const positions = [];
+  let validCount = 0;
+  let firstPosition = null;
 
-  items.forEach(item => {
+  for (const item of visible) {
+    const latitude = Number(item.latitude);
+    const longitude = Number(item.longitude);
+
     if (
-      item.latitude == null ||
-      item.longitude == null
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude)
     ) {
-      return;
+      continue;
     }
 
     const position = new kakao.maps.LatLng(
-      item.latitude,
-      item.longitude
+      latitude,
+      longitude
     );
 
-    const level = riskReference
-      ? riskTools.getRiskLevel(
-          item.riskScore,
-          riskReference
-        )
-      : "unknown";
-
-    const button = makeElement(
-      "button",
-      "risk-marker " +
-      (level === "unknown" ? "" : level)
-    );
-
-    button.type = "button";
-
-    if (level === "unknown") {
-      button.style.backgroundColor = "#94a3b8";
+    if (!firstPosition) {
+      firstPosition = position;
     }
 
-    button.title =
-      `${item.name} · 자전거 사고 위험도 ` +
-      `${fmt(item.riskScore)}점`;
+    validCount++;
+    visibleKeys.add(item.key);
 
-    button.setAttribute(
-      "aria-label",
-      button.title
+    const current = overlays.get(item.key);
+
+    const level = risk.getRiskLevel(
+      item.riskScore,
+      reference
     );
 
-    button.addEventListener("click", () => {
-      showAccidentDetail(item);
+    if (current) {
+      // 점수가 그대로면 기존 마커 재사용
+      if (current.score !== item.riskScore) {
+        current.overlay.setMap(null);
 
-      requestAnimationFrame(() => {
-        map.relayout();
-        map.panTo(position);
-      });
-    });
+        overlays.set(
+          item.key,
+          createMarker(item)
+        );
 
-    const overlay = new kakao.maps.CustomOverlay({
-      position,
-      content: button,
-      yAnchor: 0.5,
-      zIndex: 3
-    });
+      } else {
+        if (current.level !== level) {
+          current.button.className =
+            "risk-marker " + level;
 
-    overlay.setMap(map);
-    markers.push(overlay);
+          current.level = level;
+        }
 
-    positions.push(position);
-    bounds.extend(position);
-  });
+        current.button.title =
+          `${item.name} · ${fmt(item.riskScore)}점`;
+      }
 
-  if (fitBounds && positions.length > 0) {
-    if (positions.length === 1) {
-      map.setCenter(positions[0]);
-      map.setLevel(5);
     } else {
-      map.setBounds(bounds, 50, 50, 70, 50);
+      overlays.set(
+        item.key,
+        createMarker(item)
+      );
+    }
+
+    bounds.extend(position);
+  }
+
+  // 더 이상 보이지 않는 마커 제거
+  for (const [key, marker] of overlays) {
+    if (!visibleKeys.has(key)) {
+      marker.overlay.setMap(null);
+      overlays.delete(key);
     }
   }
 
-  setText("spotCount", fmt(items.length));
+  // 처음 접속하거나 지역을 직접 변경했을 때
+  if (fitBounds && validCount > 0) {
+    if (validCount === 1) {
+      map.setCenter(firstPosition);
+      map.setLevel(5);
+
+    } else {
+      map.setBounds(
+        bounds,
+        50,
+        50,
+        70,
+        50
+      );
+    }
+  }
+
+  setText(
+    "spotCount",
+    fmt(visible.length)
+  );
 
   setText(
     "accidentCount",
-    fmt(items.reduce(
-      (sum, item) => sum + num(item.accidentCount),
-      0
-    ))
+    fmt(
+      visible.reduce(
+        (sum, item) =>
+          sum + numeric(item.accidentCount),
+        0
+      )
+    )
   );
 
   setText(
     "casualtyCount",
-    fmt(items.reduce(
-      (sum, item) => sum + num(item.casualtyCount),
-      0
-    ))
+    fmt(
+      visible.reduce(
+        (sum, item) =>
+          sum + numeric(item.casualtyCount),
+        0
+      )
+    )
   );
 
   setText(
     "currentRegion",
-    districtName(districtSelect.value)
+    districtName(districtSelect().value)
   );
 }
 
-// =========================================
-// 13. 로딩 화면 갱신
-// =========================================
-
-function updateStatus() {
-  if (!statusBox) return;
-
-  if (!isComplete) {
-    statusBox.textContent =
-      `자전거 사고지역 조회 중 ` +
-      `${completedRequests}/${totalRequests}건`;
-  } else {
-    statusBox.textContent =
-      `자전거 사고지역 조회 완료 · ` +
-      `자료 없음 ${noDataRequests.length}건 · ` +
-      `요청 실패 ${failedRequests.length}건`;
-  }
-}
-
-function refreshScreen() {
-  if (!riskTools) return;
-
-  updateRiskReference();
-
-  const shouldFit =
-    !hasFittedMap &&
-    groupedAccidents.length > 0;
-
-  displayMarkers(shouldFit);
-
-  if (shouldFit) {
-    hasFittedMap = true;
-  }
-
-  if (panelMode === "overview") {
-    // 스크롤 위치를 유지한 채 내용 갱신
-    const scroll = detailPanel.scrollTop;
-
-    renderSeoulOverview();
-
-    detailPanel.scrollTop = scroll;
-  } else if (panelMode === "detail") {
-    const selected = groupedAccidents.find(
-      item => item.key === selectedAccidentKey
-    );
-
-    if (selected) {
-      const scroll = detailPanel.scrollTop;
-
-      showAccidentDetail(selected, false);
-
-      detailPanel.scrollTop = scroll;
-    }
-  }
-
-  updateStatus();
-}
-
-function scheduleRefresh(force = false) {
-  if (refreshTimer) {
-    clearTimeout(refreshTimer);
-    refreshTimer = null;
-  }
-
-  if (force) {
-    refreshScreen();
-    return;
-  }
-
-  refreshTimer = setTimeout(() => {
-    refreshTimer = null;
-    refreshScreen();
-  }, UPDATE_DELAY);
-}
-
-// =========================================
-// 14. 지역 필터
-// =========================================
+// ========================================
+// 8. 지역 선택
+// ========================================
 
 function applyFilter() {
-  if (!map || !riskTools) return;
+  if (!map) return;
 
-  // 지도만 선택 지역으로 변경
-  // 서울 전체 자전거 사고 통계는 유지
   if (panelMode === "detail") {
     showSeoulOverview();
   }
 
-  displayMarkers(true);
-  updateStatus();
+  renderMap(true);
 }
 
 function resetFilter() {
-  if (!districtSelect) return;
-
-  districtSelect.value = "all";
+  districtSelect().value = "all";
   applyFilter();
 }
 
-// =========================================
-// 15. 요청 결과 저장
-// =========================================
+window.applyFilter = applyFilter;
+window.resetFilter = resetFilter;
 
-function acceptResult(job, result) {
-  completedJobKeys.add(
-    job.year + "|" + job.district
+// ========================================
+// 9. 전체 화면 갱신
+// ========================================
+
+function renderAll() {
+  if (!snapshot || !risk || !map) return;
+
+  groups = risk.groupRiskAccidents(
+    snapshot.items
   );
 
-  if (result.status === "success") {
-    allAccidents.push(...result.items);
-  } else if (result.status === "nodata") {
-    noDataRequests.push(job);
-  } else {
-    failedRequests.push({
-      ...job,
-      reason: result.reason || "UNKNOWN_ERROR"
-    });
+  updateRiskReference();
+  updateLegend();
+
+  const firstFit =
+    !fitOnce && groups.length > 0;
+
+  renderMap(firstFit);
+
+  if (firstFit) {
+    fitOnce = true;
   }
 
-  completedRequests++;
+  if (panelMode === "overview") {
+    renderOverview();
 
-  if (
-    result.status === "success" &&
-    result.items.length > 0
-  ) {
-    scheduleRefresh();
-  } else if (panelMode === "overview") {
-    renderSeoulOverview();
-  }
-
-  updateStatus();
-}
-
-// =========================================
-// 16. 서울 자전거 사고 데이터 조회
-// =========================================
-
-async function loadSeoulData() {
-  if (isLoading) return;
-
-  isLoading = true;
-
-  const jobs = [];
-
-  for (const year of riskTools.RISK_YEARS) {
-    for (const district of riskTools.RISK_DISTRICTS) {
-      jobs.push({ year, district });
-    }
-  }
-
-  totalRequests = jobs.length;
-
-  let next = 0;
-
-  async function worker() {
-    while (next < jobs.length) {
-      const job = jobs[next++];
-
-      const result = await fetchWithRetry(
-        job.year,
-        job.district
-      );
-
-      acceptResult(job, result);
-    }
-  }
-
-  try {
-    await Promise.all(
-      Array.from(
-        { length: CONCURRENT_REQUESTS },
-        () => worker()
-      )
+  } else if (panelMode === "detail") {
+    const item = groups.find(
+      group => group.key === selectedKey
     );
-  } finally {
-    isLoading = false;
-    isComplete = true;
 
-    scheduleRefresh(true);
-
-    window.BIKE_SAFE_FAILED_REQUESTS =
-      failedRequests;
-
-    window.BIKE_SAFE_NODATA_REQUESTS =
-      noDataRequests;
-
-    console.group("BIKE SAFE 자전거 사고 데이터");
-
-    console.log({
-      totalRequests,
-      noData: noDataRequests.length,
-      failed: failedRequests.length,
-      accidentRegions: groupedAccidents.length
-    });
-
-    if (failedRequests.length) {
-      console.table(failedRequests);
+    if (item) {
+      showAccidentDetail(item, false);
     }
-
-    console.groupEnd();
   }
+
+  const status = snapshot.finished
+    ? (
+      "자전거 사고지역 조회 완료 · " +
+      `자료 없음 ${snapshot.nodata.length}건 · ` +
+      `실제 실패 ${snapshot.failed.length}건`
+    )
+    : (
+      "자전거 사고지역 조회 중 " +
+      `${snapshot.completed}/${snapshot.total}건 · ` +
+      "저장된 자료 우선 표시"
+    );
+
+  setText("status", status);
 }
 
-// =========================================
-// 17. 페이지 시작
-// =========================================
+// ========================================
+// 10. 페이지 시작
+// ========================================
 
 window.addEventListener("load", async () => {
   if (
-    !mapElement ||
-    !mapLayout ||
-    !detailPanel ||
-    !detailContent ||
-    !districtSelect ||
-    !statusBox
+    !$("map") ||
+    !$("mapLayout") ||
+    !$("detailPanel") ||
+    !$("detailContent") ||
+    !$("district")
   ) {
-    console.error(
-      "BIKE SAFE 필수 HTML 요소를 찾지 못했습니다."
-    );
     return;
   }
 
-  // HTML에서 버튼이 이미 있거나 없어도 작동
-  getOpenButton();
+  if (!window.kakao?.maps) {
+    setText(
+      "detailContent",
+      "카카오맵 SDK를 불러오지 못했어요."
+    );
 
-  // 첫 화면은 서울 전체 자전거 사고 현황
-  panelMode = "overview";
-  mapLayout.classList.add("active");
-  getOpenButton().hidden = true;
-
-  setPanelTitle("서울 전체 자전거 사고 현황");
-
-  if (!window.kakao || !kakao.maps) {
-    detailContent.textContent =
-      "카카오맵을 불러오지 못했습니다.";
     return;
   }
 
   try {
-    riskTools = await import("./risk.js");
+    risk = await import("./risk.js");
+
+    const shared = await import("./data.js");
+
+    map = new kakao.maps.Map($("map"), {
+      center: new kakao.maps.LatLng(
+        37.5665,
+        126.978
+      ),
+      level: 9
+    });
+
+    reference = risk.readRiskReference();
+
+    snapshot = shared.getSnapshot();
+
+    // 첫 화면: 서울 전체 자전거 사고 현황
+    renderOverview();
+    resizeMap();
+
+    // 캐시 데이터 또는 API 응답이 바뀔 때 갱신
+    shared.subscribe(next => {
+      snapshot = next;
+
+      if (renderTimer) {
+        clearTimeout(renderTimer);
+      }
+
+      if (next.finished || !next.loading) {
+        renderAll();
+
+      } else {
+        renderTimer = setTimeout(
+          renderAll,
+          180
+        );
+      }
+    });
+
+    // 캐시를 먼저 읽고 부족한 자료만 요청
+    shared.startLoading();
+
   } catch (error) {
-    detailContent.textContent =
-      "위험도 분석 파일을 불러오지 못했습니다.";
     console.error(error);
-    return;
+
+    setText(
+      "detailContent",
+      "자전거 사고 데이터 파일을 " +
+      "불러오지 못했어요."
+    );
   }
-
-  map = new kakao.maps.Map(mapElement, {
-    center: new kakao.maps.LatLng(
-      MAP_CENTER.lat,
-      MAP_CENTER.lng
-    ),
-    level: 9
-  });
-
-  relayoutMap();
-
-  riskReference =
-    riskTools.readRiskReference();
-
-  referenceIsPartial = !riskReference;
-
-  renderSeoulOverview();
-  updateLegend();
-
-  if (
-    !GAS_URL.startsWith(
-      "https://script.google.com/macros/s/"
-    ) ||
-    !GAS_URL.endsWith("/exec")
-  ) {
-    detailContent.textContent =
-      "Google Apps Script 주소를 확인해 주세요.";
-    return;
-  }
-
-  await loadSeoulData();
 });
